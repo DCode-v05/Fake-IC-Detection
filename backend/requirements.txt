@@ -1,0 +1,32 @@
+# Django Backend Requirements
+# IC Marking Detection System
+
+# Django Framework
+Django>=4.2.0
+
+# CORS headers for React frontend
+django-cors-headers>=4.3.0
+
+# Deep Learning & Object Detection
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0  # YOLOv8 for logo detection
+
+# Computer Vision
+opencv-python>=4.8.0
+
+# OCR (Optical Character Recognition)
+paddleocr>=2.7.0
+paddlepaddle>=2.5.0  # CPU version (use paddlepaddle-gpu for GPU support)
+
+# Image Processing
+Pillow>=9.5.0
+
+# Numerical Computing
+numpy>=1.24.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# For development
+python-dotenv>=1.0.0

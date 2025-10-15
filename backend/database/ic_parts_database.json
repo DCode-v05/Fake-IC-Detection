@@ -1,0 +1,401 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "IC Part Number Database for Marking Verification",
+    "total_manufacturers": 6,
+    "total_parts": 18,
+    "last_updated": "2025-10-08"
+  },
+  "manufacturers": {
+    "Texas Instruments": {
+      "logo_keywords": ["TI", "TEXAS INSTRUMENTS", "TEXAS INST"],
+      "parts": [
+        {
+          "PartNo": "SN74HC00",
+          "FullPartNumber": "SN74HC00N",
+          "Suffixes": ["N", "D"],
+          "Description": "Quad 2-Input NAND Gate",
+          "Package": ["DIP-14", "SOIC-14"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "21",
+              "WW": "45",
+              "Meaning": "Week 45 of 2021"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["USA", "MYS", "PHL"],
+            "LotCode": "Optional alphanumeric"
+          }
+        },
+        {
+          "PartNo": "LM324",
+          "FullPartNumber": "LM324N-1",
+          "Suffixes": ["N-1", "N-3"],
+          "Description": "Low Voltage Audio Power Amplifier",
+          "Package": ["DIP-8"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "20",
+              "WW": "12",
+              "Meaning": "Week 12 of 2020"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["USA", "MYS"],
+            "LotCode": "Optional alphanumeric"
+          }
+        },
+        {
+          "PartNo": "SN74LS47",
+          "FullPartNumber": "SN74LS47N",
+          "Suffixes": ["N", "D"],
+          "Description": "BCD to 7-Segment Decoder/Driver",
+          "Package": ["DIP-16", "SOIC-16"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "22",
+              "WW": "30",
+              "Meaning": "Week 30 of 2022"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["USA", "MYS", "PHL"],
+            "LotCode": "Optional alphanumeric"
+          }
+        }
+      ]
+    },
+    "STMicroelectronics": {
+      "logo_keywords": ["ST", "STM", "STMICRO", "STMICROELECTRONICS"],
+      "parts": [
+        {
+          "PartNo": "STM32F030",
+          "FullPartNumber": "STM32F030K6",
+          "Suffixes": ["K6", "K8"],
+          "Description": "32-bit ARM Cortex-M0 Microcontroller",
+          "Package": ["LQFP32"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "23",
+              "WW": "10",
+              "Meaning": "Week 10 of 2023"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "MYS", "MLT"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        },
+        {
+          "PartNo": "STM32L432",
+          "FullPartNumber": "STM32L432KCU3",
+          "Suffixes": ["KCU3"],
+          "Description": "Ultra-low-power ARM Cortex-M4 MCU",
+          "Package": ["UFQFPN32"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "22",
+              "WW": "52",
+              "Meaning": "Week 52 of 2022"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "MLT"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        },
+        {
+          "PartNo": "STM32H743",
+          "FullPartNumber": "STM32H743IIT6",
+          "Suffixes": ["IIT6"],
+          "Description": "High-performance ARM Cortex-M7 MCU",
+          "Package": ["LQFP176"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "24",
+              "WW": "05",
+              "Meaning": "Week 05 of 2024"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "MYS"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        }
+      ]
+    },
+    "ON Semiconductor": {
+      "logo_keywords": ["ON", "ONSEMI", "ON SEMI", "ON SEMICONDUCTOR"],
+      "parts": [
+        {
+          "PartNo": "NCP1117",
+          "FullPartNumber": "NCP1117ST33",
+          "Suffixes": ["ST33", "ST01"],
+          "Description": "Low Dropout Voltage Regulator",
+          "Package": ["SOT-223"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "21",
+              "WW": "36",
+              "Meaning": "Week 36 of 2021"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "MYS", "VNM"],
+            "LotCode": "Optional alphanumeric"
+          }
+        },
+        {
+          "PartNo": "MC33063",
+          "FullPartNumber": "MC33063ADR",
+          "Suffixes": ["ADR"],
+          "Description": "DC-to-DC Converter",
+          "Package": ["SOIC-8"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "20",
+              "WW": "44",
+              "Meaning": "Week 44 of 2020"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "MYS"],
+            "LotCode": "Optional alphanumeric"
+          }
+        },
+        {
+          "PartNo": "FAN53555",
+          "FullPartNumber": "FAN53555B",
+          "Suffixes": ["B"],
+          "Description": "Programmable TinyBuck Regulator",
+          "Package": ["WLCSP"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "23",
+              "WW": "03",
+              "Meaning": "Week 03 of 2023"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "VNM"],
+            "LotCode": "Optional alphanumeric"
+          }
+        }
+      ]
+    },
+    "NXP Semiconductors": {
+      "logo_keywords": ["NXP", "NXP SEMI"],
+      "parts": [
+        {
+          "PartNo": "LPC1768",
+          "FullPartNumber": "LPC1768FBD100",
+          "Suffixes": ["FBD100"],
+          "Description": "32-bit ARM Cortex-M3 Microcontroller",
+          "Package": ["LQFP100"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "22",
+              "WW": "18",
+              "Meaning": "Week 18 of 2022"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "TWN", "NLD"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        },
+        {
+          "PartNo": "TJA1057",
+          "FullPartNumber": "TJA1057BTK",
+          "Suffixes": ["BTK"],
+          "Description": "High-speed CAN Transceiver",
+          "Package": ["HVSON8"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "24",
+              "WW": "22",
+              "Meaning": "Week 22 of 2024"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["CHN", "TWN"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        },
+        {
+          "PartNo": "i.MX 8M Plus",
+          "FullPartNumber": "i.MX8MPLUS-CVNKZAB",
+          "Suffixes": ["CVNKZAB"],
+          "Description": "Applications Processor with ML Accelerator",
+          "Package": ["FCBGA"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "23",
+              "WW": "40",
+              "Meaning": "Week 40 of 2023"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["TWN", "KOR"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        }
+      ]
+    },
+    "Microchip": {
+      "logo_keywords": ["MICROCHIP", "MCHP", "ATMEL"],
+      "parts": [
+        {
+          "PartNo": "ATmega328P",
+          "FullPartNumber": "ATmega328P-PU",
+          "Suffixes": ["PU", "AU"],
+          "Description": "8-bit AVR Microcontroller",
+          "Package": ["DIP-28", "TQFP-32"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "22",
+              "WW": "11",
+              "Meaning": "Week 11 of 2022"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["THA", "TWN", "PHL"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        },
+        {
+          "PartNo": "dsPIC33FJ128MC802",
+          "FullPartNumber": "dsPIC33FJ128MC802-I/ML",
+          "Suffixes": ["I/ML"],
+          "Description": "16-bit Digital Signal Controller",
+          "Package": ["QFN-28"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "21",
+              "WW": "29",
+              "Meaning": "Week 29 of 2021"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["THA", "TWN"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        },
+        {
+          "PartNo": "AVR32SD20",
+          "FullPartNumber": "AVR32SD20-T-I/SS",
+          "Suffixes": ["T-I/SS"],
+          "Description": "32-bit AVR Microcontroller",
+          "Package": ["SSOP-28"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "20",
+              "WW": "07",
+              "Meaning": "Week 07 of 2020"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["THA", "PHL"],
+            "LotCode": "Alphanumeric trace code"
+          }
+        }
+      ]
+    },
+    "Infineon": {
+      "logo_keywords": ["INFINEON", "IFX"],
+      "parts": [
+        {
+          "PartNo": "IRF540N",
+          "FullPartNumber": "IRF540NPBF",
+          "Suffixes": ["PBF"],
+          "Description": "Power MOSFET",
+          "Package": ["TO-220"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "23",
+              "WW": "14",
+              "Meaning": "Week 14 of 2023"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["DEU", "MYS", "PHL"],
+            "LotCode": "Alphanumeric lot code"
+          }
+        },
+        {
+          "PartNo": "TLE9879",
+          "FullPartNumber": "TLE9879G36",
+          "Suffixes": ["G36"],
+          "Description": "Motor Control IC",
+          "Package": ["VQFN-48"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "22",
+              "WW": "50",
+              "Meaning": "Week 50 of 2022"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["DEU", "MYS"],
+            "LotCode": "Alphanumeric lot code"
+          }
+        },
+        {
+          "PartNo": "BTS5160",
+          "FullPartNumber": "BTS5160-1EERQ",
+          "Suffixes": ["-1EERQ"],
+          "Description": "Smart High-Side Power Switch",
+          "Package": ["PG-TO252-5"],
+          "YY_WW_info": {
+            "Format": "YYWW",
+            "Description": "Year/Week manufacturing date code",
+            "Example": {
+              "YY": "23",
+              "WW": "08",
+              "Meaning": "Week 08 of 2023"
+            }
+          },
+          "AdditionalMarkings": {
+            "CountryCode": ["DEU", "MYS"],
+            "LotCode": "Alphanumeric lot code"
+          }
+        }
+      ]
+    }
+  }
+}

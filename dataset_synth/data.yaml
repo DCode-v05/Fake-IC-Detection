@@ -1,0 +1,11 @@
+names:
+- Infineon
+- Microchip
+- NXP Semiconductors
+- ON Semiconductor
+- STMicroelectronics
+- Texas Instruments
+nc: 6
+path: D:\Deni\Mr. Tech\AI\Projects\Fake IC Marking Detection\dataset_synth
+train: images/train
+val: images/val
