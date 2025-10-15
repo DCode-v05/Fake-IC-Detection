@@ -150,7 +150,7 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
                     <div className="step-label">
                       {stepKey === 'preprocessing' && 'Image Preprocessed'}
                       {stepKey === 'logo_detection' && 'Logo Detection using YOLO'}
-                      {stepKey === 'ocr_extraction' && 'IC Marking Extraction using PaddleOCR'}
+                      {stepKey === 'ocr_extraction' && 'IC Marking Verify with OEM using PaddleOCR'}
                       {stepKey === 'verification' && 'Database Verification'}
                     </div>
                     <div className="step-message">{step.message}</div>

@@ -252,7 +252,7 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
                     <div className="step-label">
                       {stepKey === 'preprocessing' && 'Image Preprocessed'}
                       {stepKey === 'logo_detection' && 'Logo Detection using YOLO'}
-                      {stepKey === 'ocr_extraction' && 'IC Marking Verify with OEM using PaddleOCR'}
+                      {stepKey === 'ocr_extraction' && 'IC Marking Extraction using PaddleOCR'}
                       {stepKey === 'user_validation' && 'User Validation'}
                     </div>
                     <div className="step-message">{step.message}</div>
@@ -300,7 +300,7 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
                     {result.userValidation.matches_expectations ? '✓' : '✗'}
                   </div>
                   <div className="big-result-text">
-                    {result.userValidation.matches_expectations ? 'GENUINE' : 'COUNTERFEIT'}
+                    {result.userValidation.matches_expectations ? 'GENUINE' : 'FAKE'}
                   </div>
                 </div>
               </>
