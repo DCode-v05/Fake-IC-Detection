@@ -372,7 +372,7 @@ class ICVerifier:
             # Try to extract any potential part numbers from raw text for Nexar lookup
             raw_text = parsed_marking.get("raw_text", "")
             if raw_text:
-                print(f"🔍 Parsing failed, attempting Nexar lookup with raw text: '{raw_text}'")
+                print(f"🔍 Attempting Nexar lookup with raw text: '{raw_text}'")
                 # Try to find part number patterns in raw text
                 import re
                 # Look for common part number patterns (alphanumeric sequences of 5+ chars)

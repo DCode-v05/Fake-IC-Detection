@@ -2848,11 +2848,11 @@
         "warnings": [
           "Potential part numbers detected: TENARY, LM235",
           "Manufacturer logo detected (Texas Instruments, 74.0% confidence) but IC markings do not match any known genuine parts",
-          "\u26a0\ufe0f CAUTION: This IC may be counterfeit - part numbers not found in any authorized database"
+          "\u26a0\ufe0f CAUTION: This IC may be fake - part numbers not found in any authorized database"
         ],
         "errors": [
           "Failed to parse IC markings",
-          "Part numbers TENARY, LM235 NOT FOUND in manufacturer database - possible counterfeit",
+          "Part numbers TENARY, LM235 NOT FOUND in manufacturer database - possible fake",
           "Part verification FAILED: Unable to find matching part for Texas Instruments in local or web databases"
         ],
         "details": {
@@ -8021,11 +8021,156 @@
         }
       },
       "final_status": "fake"
+    },
+    {
+      "id": "INS_20251015135436_107",
+      "timestamp": "2025-10-15T13:54:36.630103",
+      "original_filename": "TI LM325 Fake.png",
+      "image_path": "media/uploads\\20251015_135409_TI LM325 Fake.png",
+      "manufacturer": "Texas Instruments",
+      "confidence": 0.7400144004821777,
+      "all_probabilities": {
+        "Texas Instruments": 0.7400144004821777
+      },
+      "top_predictions": [
+        {
+          "manufacturer": "Texas Instruments",
+          "confidence": 0.7400144004821777
+        }
+      ],
+      "ocr_results": {
+        "extracted_text": [
+          "tenary",
+          "LM235"
+        ],
+        "full_text": "tenary LM235",
+        "average_confidence": 0.0
+      },
+      "parsed_marking": {
+        "success": false,
+        "manufacturer": "Texas Instruments",
+        "part_number": null,
+        "suffix": null,
+        "date_code": null,
+        "country_code": null,
+        "raw_text": "tenary LM235",
+        "confidence": 0.0
+      },
+      "verification": {
+        "timestamp": "2025-10-15T13:54:34.234876",
+        "manufacturer": "Texas Instruments",
+        "logo_confidence": 0.7400144004821777,
+        "verification_status": "failed",
+        "authenticity": "fake",
+        "confidence_score": 0.0,
+        "validations": {},
+        "warnings": [
+          "Potential part numbers detected: TENARY, LM235"
+        ],
+        "errors": [
+          "Failed to parse IC markings",
+          "\u26a0\ufe0f FAKE IC DETECTED: Part numbers TENARY, LM235 NOT FOUND in any manufacturer database",
+          "Verification FAILED: Texas Instruments logo detected but markings do not match any genuine parts"
+        ],
+        "details": {
+          "detected_manufacturer": "Texas Instruments",
+          "manufacturer_confidence": 0.7400144004821777,
+          "extracted_text": "tenary LM235",
+          "detection_method": "Logo and OCR",
+          "potential_parts": [
+            "TENARY",
+            "LM235"
+          ]
+        }
+      },
+      "final_status": "fake"
+    },
+    {
+      "id": "INS_20251015135445_108",
+      "timestamp": "2025-10-15T13:54:45.413142",
+      "original_filename": "LM324 IC.jpg",
+      "image_path": "media/uploads\\20251015_135437_LM324 IC.jpg",
+      "manufacturer": "Texas Instruments",
+      "confidence": 0.7139767843484879,
+      "all_probabilities": {
+        "Texas Instruments": 0.7139767843484879
+      },
+      "top_predictions": [
+        {
+          "manufacturer": "Texas Instruments",
+          "confidence": 0.7139767843484879
+        }
+      ],
+      "ocr_results": {
+        "extracted_text": [
+          "LM324",
+          "R"
+        ],
+        "full_text": "LM324 R",
+        "average_confidence": 0.0
+      },
+      "parsed_marking": {
+        "success": false,
+        "manufacturer": "Texas Instruments",
+        "part_number": null,
+        "suffix": null,
+        "date_code": null,
+        "country_code": null,
+        "raw_text": "LM324 R",
+        "confidence": 0.0
+      },
+      "verification": {
+        "timestamp": "2025-10-15T13:54:44.248189",
+        "manufacturer": "Texas Instruments",
+        "logo_confidence": 0.7139767843484879,
+        "verification_status": "passed",
+        "authenticity": "genuine",
+        "confidence_score": 0.7,
+        "validations": {
+          "part_number": {
+            "valid": true,
+            "source": "nexar_web",
+            "matched_part": {
+              "found": true,
+              "source": "nexar",
+              "part_number": "TEXASINSTRUMENTSLM324ADR",
+              "manufacturer": "Texas Instruments",
+              "description": "",
+              "category": "Unknown",
+              "category_path": "",
+              "specifications": {},
+              "total_availability": 0,
+              "in_stock": false,
+              "sellers": [],
+              "seller_count": 0
+            },
+            "part_number": "TEXASINSTRUMENTSLM324ADR",
+            "description": "",
+            "web_verified": true,
+            "in_stock": false,
+            "availability": 0,
+            "sellers": 0
+          }
+        },
+        "warnings": [
+          "Part LM324 verified in Nexar database - 0 authorized sellers",
+          "Marking parsing failed, but part verified in web database"
+        ],
+        "errors": [],
+        "details": {
+          "part_number": "LM324",
+          "verified_via": "Nexar Web Database (fallback)",
+          "web_availability": 0,
+          "in_stock": false,
+          "sellers": 0
+        }
+      },
+      "final_status": "genuine"
     }
   ],
   "metadata": {
     "created_at": "2025-10-08T10:38:49.940375",
-    "total_inspections": 106,
-    "last_updated": "2025-10-14T18:10:54.360978"
+    "total_inspections": 108,
+    "last_updated": "2025-10-15T13:54:45.413142"
   }
 }

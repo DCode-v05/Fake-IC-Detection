@@ -6,6 +6,59 @@
 const API_BASE_URL = 'http://localhost:8000/api';
 
 /**
+ * Stream IC detection with progressive updates (SSE)
+ * 
+ * @param {File} imageFile - The IC image file to analyze
+ * @param {Function} onProgress - Callback for each progress update
+ * @param {Object} userInputs - Optional user expectations
+ * @returns {Promise<void>}
+ */
+export const detectManufacturerStream = async (imageFile, onProgress, userInputs = {}) => {
+  try {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    if (userInputs.expectedManufacturer) {
+      formData.append('expected_manufacturer', userInputs.expectedManufacturer);
+    }
+    if (userInputs.expectedPartNumber) {
+      formData.append('expected_part_number', userInputs.expectedPartNumber);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/detect-stream/`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Stream detection failed');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = JSON.parse(line.substring(6));
+          onProgress(data);
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error('API Error - detectManufacturerStream:', error);
+    throw error;
+  }
+};
+
+/**
  * Upload IC image and get detection results
  * Includes: Logo detection, OCR extraction, Marking validation
  * 

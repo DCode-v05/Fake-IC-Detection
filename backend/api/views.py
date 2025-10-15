@@ -151,6 +151,203 @@ def initialize_services():
 
 @csrf_exempt
 @require_http_methods(["POST"])
+def detect_manufacturer_stream(request):
+    """
+    Streaming endpoint for progressive IC manufacturer detection updates
+    
+    POST /api/detect-stream/
+    - Upload IC image
+    - Stream progress updates for each verification step
+    - Return Server-Sent Events (SSE)
+    """
+    from django.http import StreamingHttpResponse
+    import time
+    
+    # Parse multipart form data first
+    uploaded_file = request.FILES.get('image')
+    expected_manufacturer = request.POST.get('expected_manufacturer', None)
+    expected_part_number = request.POST.get('expected_part_number', None)
+    
+    def event_stream():
+        """Generator function that yields SSE-formatted progress updates"""
+        try:
+            # Initialize services
+            initialize_services()
+            
+            # Check if image file is present
+            if not uploaded_file:
+                yield f"data: {json.dumps({'error': 'No image file provided', 'step': 'error'})}\n\n"
+                return
+            
+            # Step 1: Image Preprocessing
+            yield f"data: {json.dumps({'step': 'preprocessing', 'status': 'processing', 'message': 'Preprocessing image...'})}\n\n"
+            time.sleep(0.5)
+            
+            is_valid, error_message = validate_image(uploaded_file)
+            if not is_valid:
+                yield f"data: {json.dumps({'error': error_message, 'step': 'error'})}\n\n"
+                return
+            
+            image_path = save_uploaded_image(uploaded_file)
+            original_image = load_image_from_file(image_path)
+            
+            yield f"data: {json.dumps({'step': 'preprocessing', 'status': 'completed', 'message': 'Image ready for analysis ✓'})}\n\n"
+            
+            # Step 2: Logo Detection
+            yield f"data: {json.dumps({'step': 'logo_detection', 'status': 'processing', 'message': 'Detecting manufacturer logo...'})}\n\n"
+            time.sleep(0.5)
+            
+            combined_result = ocr_logo_detector.detect_and_extract_combined(original_image, min_confidence=0.5)
+            
+            if not combined_result.get('success') or not combined_result['logo_detection'].get('success'):
+                yield f"data: {json.dumps({'error': combined_result['logo_detection'].get('error', 'No manufacturer logo detected'), 'step': 'error'})}\n\n"
+                return
+            
+            detection_result = combined_result['logo_detection']
+            marking_result = combined_result['marking_extraction']
+            
+            manufacturer = detection_result['manufacturer']
+            confidence = detection_result['confidence']
+            
+            yield f"data: {json.dumps({'step': 'logo_detection', 'status': 'completed', 'message': f'{manufacturer}', 'data': {'manufacturer': manufacturer, 'confidence': float(confidence)}})}\n\n"
+            
+            # Step 3: OCR Extraction
+            yield f"data: {json.dumps({'step': 'ocr_extraction', 'status': 'processing', 'message': 'Extracting IC markings...'})}\n\n"
+            time.sleep(0.5)
+            
+            ocr_result = {
+                'success': marking_result['success'],
+                'full_text': marking_result.get('raw_text', ''),
+                'raw_text': marking_result.get('raw_text', ''),
+                'extracted_text': [region['text'] for region in marking_result.get('text_regions', [])],
+                'text_regions': marking_result.get('text_regions', [])
+            }
+            
+            ic_marking = ocr_result.get('full_text', 'N/A')
+            
+            # First, send OCR as processing (yellow)
+            # We'll update it later based on verification result
+            
+            # Step 4: Database Verification
+            yield f"data: {json.dumps({'step': 'verification', 'status': 'processing', 'message': 'Verifying authenticity...'})}\n\n"
+            time.sleep(0.5)
+            
+            parsed_marking = None
+            verification_result = None
+            part_found_in_db = False
+            
+            if ocr_result.get("success"):
+                manufacturer_parts = ic_verifier.get_manufacturer_parts(manufacturer)
+                
+                if manufacturer_parts:
+                    parsed_marking = parse_marking(
+                        ocr_result=ocr_result,
+                        manufacturer=manufacturer,
+                        known_parts=manufacturer_parts
+                    )
+                    
+                    verification_result = ic_verifier.comprehensive_verification(
+                        parsed_marking=parsed_marking,
+                        manufacturer=manufacturer,
+                        logo_confidence=confidence
+                    )
+                    
+                    # Check if part number was found in database
+                    if verification_result:
+                        details = verification_result.get('details', {})
+                        part_found_in_db = details.get('part_number_valid', False)
+            
+            # Determine status and verification step status
+            final_status = 'fake'  # lowercase for frontend compatibility
+            final_message = f"Detected as {manufacturer} logo"
+            verification_step_status = 'completed'  # Default to completed
+            ocr_step_status = 'completed'  # Default to completed
+            verification_source = 'local'  # Track where verification came from
+            
+            if verification_result:
+                authenticity = verification_result.get('authenticity', 'fake')
+                details = verification_result.get('details', {})
+                
+                # Check verification source (Nexar vs Local)
+                verified_via = details.get('verified_via', '')
+                if 'Nexar' in verified_via or 'Web' in verified_via:
+                    verification_source = 'nexar'
+                else:
+                    verification_source = 'local'
+                
+                if authenticity == 'genuine':
+                    final_status = 'genuine'  # lowercase for frontend
+                    
+                    # Different messages based on source
+                    if verification_source == 'nexar':
+                        final_message = f"❌ NOT FOUND IN LOCAL DATABASE✅ VERIFIED VIA NEXAR WEB DATABASE"
+                    else:
+                        final_message = f"✅ VERIFIED AS GENUINE"
+                    
+                    verification_step_status = 'completed'
+                    ocr_step_status = 'completed'
+                else:
+                    final_status = 'fake'  # lowercase for frontend
+                    final_message = f"❌ FAKE DETECTED"
+                    verification_step_status = 'failed'  # Mark as failed for fake ICs
+                    
+                    # If part not found in DB, mark OCR extraction as failed too
+                    if not part_found_in_db:
+                        ocr_step_status = 'failed'
+            else:
+                # No verification result means failure
+                verification_step_status = 'failed'
+                ocr_step_status = 'failed'
+                final_status = 'fake'
+                final_message = f"❌ FAKE DETECTED"
+            
+            # Now update OCR step with final status (green if found, red if not found in DB)
+            yield f"data: {json.dumps({'step': 'ocr_extraction', 'status': ocr_step_status, 'message': f'{ic_marking[:50]}', 'data': {'marking': ic_marking}})}\n\n"
+            
+            # Send verification result with source information
+            verification_data = {
+                'status': final_status,
+                'source': verification_source
+            }
+            yield f"data: {json.dumps({'step': 'verification', 'status': verification_step_status, 'message': final_message, 'data': verification_data})}\n\n"
+            
+            # User Validation (if expected values provided)
+            user_validation = None
+            if expected_manufacturer or expected_part_number:
+                user_validation = validate_user_expectations(
+                    expected_manufacturer=expected_manufacturer or '',
+                    expected_part_number=expected_part_number or '',
+                    detected_manufacturer=manufacturer,
+                    parsed_marking=parsed_marking or {},
+                    ocr_result=ocr_result
+                )
+            
+            # Final step: Complete
+            time.sleep(0.3)
+            complete_data = {
+                'step': 'complete',
+                'status': 'completed',
+                'message': 'Analysis complete',
+                'final_status': final_status
+            }
+            if user_validation:
+                complete_data['user_validation'] = user_validation
+            
+            yield f"data: {json.dumps(complete_data)}\n\n"
+            
+        except Exception as e:
+            print(f"Stream error: {str(e)}")
+            traceback.print_exc()
+            yield f"data: {json.dumps({'error': str(e), 'step': 'error'})}\n\n"
+    
+    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    return response
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
 def detect_manufacturer(request):
     """
     Main endpoint for IC manufacturer detection

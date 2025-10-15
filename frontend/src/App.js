@@ -58,7 +58,7 @@ function App() {
             </h2>
             <p className="description">
               {activeTab === 'detection'
-                ? 'Upload IC component images for automated marking verification and counterfeit detection. The system compares IC markings against OEM specifications to ensure component authenticity.'
+                ? 'Upload IC component images for automated marking verification and fake detection. The system compares IC markings against OEM specifications to ensure component authenticity.'
                 : 'Provide expected IC details first, then upload the IC image. The system will verify if the detected markings match your expectations.'}
             </p>
           </section>

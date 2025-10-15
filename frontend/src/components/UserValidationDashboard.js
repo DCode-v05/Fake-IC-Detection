@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '../styles/InspectionDashboard.css';
-import { detectManufacturer } from '../services/api';
+import { detectManufacturerStream } from '../services/api';
 import ImageUpload from './ImageUpload';
 
 /**
@@ -13,6 +13,14 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
   // User input fields - always required in this mode
   const [expectedManufacturer, setExpectedManufacturer] = useState('');
   const [expectedPartNumber, setExpectedPartNumber] = useState('');
+  
+  // Progressive steps state
+  const [progressSteps, setProgressSteps] = useState({
+    preprocessing: { status: 'pending', message: 'Preprocessing image...', data: null },
+    logo_detection: { status: 'pending', message: 'Detecting logo...', data: null },
+    ocr_extraction: { status: 'pending', message: 'Extracting IC marking...', data: null },
+    user_validation: { status: 'pending', message: 'Validating against user inputs...', data: null }
+  });
   
   const handleValidateIC = async () => {
     if (!image) {
@@ -28,6 +36,14 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
     onStatusChange('processing');
     setError(null);
     
+    // Reset progress steps
+    setProgressSteps({
+      preprocessing: { status: 'pending', message: 'Preprocessing image...', data: null },
+      logo_detection: { status: 'pending', message: 'Detecting logo...', data: null },
+      ocr_extraction: { status: 'pending', message: 'Extracting IC marking...', data: null },
+      user_validation: { status: 'pending', message: 'Validating against user inputs...', data: null }
+    });
+    
     try {
       // Always pass user inputs in this mode
       const userInputs = {
@@ -35,33 +51,91 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
         expectedPartNumber: expectedPartNumber.trim()
       };
       
-      const response = await detectManufacturer(image, userInputs);
+      await detectManufacturerStream(image, (update) => {
+        console.log('Progress update:', update);
+        
+        if (update.error) {
+          setError(update.error);
+          onStatusChange('idle');
+          return;
+        }
+        
+        // Update the specific step
+        if (update.step && update.step !== 'complete') {
+          // Only update if the step exists in our progressSteps
+          setProgressSteps(prev => {
+            if (prev.hasOwnProperty(update.step)) {
+              return {
+                ...prev,
+                [update.step]: {
+                  status: update.status,
+                  message: update.message,
+                  data: update.data || null
+                }
+              };
+            }
+            return prev;
+          });
+        }
+        
+        // Handle completion
+        if (update.step === 'complete') {
+          // First update the user_validation step if we have validation data
+          if (update.user_validation) {
+            const validationStatus = update.user_validation.matches_expectations ? 'completed' : 'failed';
+            const validationMessage = update.user_validation.matches_expectations 
+              ? '✓ IC matches user expectations' 
+              : '✗ IC does not match user expectations';
+            
+            setProgressSteps(prev => ({
+              ...prev,
+              user_validation: {
+                status: validationStatus,
+                message: validationMessage,
+                data: {
+                  manufacturer_match: update.user_validation.manufacturer_match,
+                  part_number_match: update.user_validation.part_number_match,
+                  matches: update.user_validation.matches_expectations
+                }
+              }
+            }));
+          }
+          
+          onStatusChange('completed');
+          // Build final result from progress data
+          const finalResult = {
+            status: update.final_status || 'fake',
+            message: update.message,
+            manufacturer: progressSteps.logo_detection?.data?.manufacturer,
+            confidence: progressSteps.logo_detection?.data?.confidence,
+            marking: progressSteps.ocr_extraction?.data ? {
+              part_number: progressSteps.ocr_extraction.data.marking
+            } : null,
+            userValidation: update.user_validation || null
+          };
+          onResultChange(finalResult);
+        }
+      }, userInputs);
       
-      if (response.success) {
-        onStatusChange('completed');
-        onResultChange({
-          status: response.result.status,
-          message: response.result.message,
-          manufacturer: response.result.manufacturer,
-          confidence: response.result.confidence,
-          ocr: response.ocr_extraction,
-          marking: response.marking_analysis,
-          verification: response.verification,
-          logo: response.logo_detection,
-          userValidation: response.user_validation
-        });
-      } else {
-        throw new Error(response.error || 'Validation failed');
-      }
     } catch (err) {
       console.error('Validation error:', err);
       onStatusChange('idle');
       setError(err.message);
-      onResultChange({
-        status: 'error',
-        message: `Error: ${err.message}`
-      });
     }
+  };
+
+  const getStepIcon = (stepStatus) => {
+    if (stepStatus === 'completed') return '✅';
+    if (stepStatus === 'failed') return '❌';
+    if (stepStatus === 'processing') return '🔄';
+    return '⏳';
+  };
+
+  const getStepClass = (stepStatus) => {
+    if (stepStatus === 'completed') return 'step-completed';
+    if (stepStatus === 'failed') return 'step-failed';
+    if (stepStatus === 'processing') return 'step-processing';
+    return 'step-pending';
   };
 
   return (
@@ -139,90 +213,94 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
         </div>
 
         {/* Validate Button below two columns */}
-        <div className="start-section" style={{paddingTop: 0}}>
-          <button 
-            className="btn-inspect btn-validate"
-            onClick={handleValidateIC}
-            disabled={status === 'processing' || !image || !expectedManufacturer || !expectedPartNumber}
-          >
-            {status === 'processing' ? (
-              <>
-                <span className="spinner"></span>
-                Validating IC...
-              </>
-            ) : (
-              <>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Validate IC Marking
-              </>
+        {!result && status === 'idle' && (
+          <div className="start-section" style={{paddingTop: 0}}>
+            <button 
+              className="btn-inspect btn-validate"
+              onClick={handleValidateIC}
+              disabled={status === 'processing' || !image || !expectedManufacturer || !expectedPartNumber}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Validate IC Marking
+            </button>
+            {error && (
+              <div className="error-alert">
+                ⚠️ {error}
+              </div>
             )}
-          </button>
-          {error && (
-            <div className="error-alert">
-              ⚠️ {error}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Progressive Steps Display - Show during processing AND after completion */}
+        {(status === 'processing' || status === 'completed') && (
+          <div className="progress-steps">
+            <h4 className="progress-title">
+              {status === 'processing' ? 'Validation Progress' : 'Validation Complete'}
+            </h4>
+            
+            {/* Render steps in fixed order */}
+            {['preprocessing', 'logo_detection', 'ocr_extraction', 'user_validation'].map((stepKey) => {
+              const step = progressSteps[stepKey];
+              if (!step) return null;
+              
+              return (
+                <div key={stepKey} className={`progress-step ${getStepClass(step.status)}`}>
+                  <div className="step-icon">{getStepIcon(step.status)}</div>
+                  <div className="step-content">
+                    <div className="step-label">
+                      {stepKey === 'preprocessing' && 'Image Preprocessed'}
+                      {stepKey === 'logo_detection' && 'Logo Detection using YOLO'}
+                      {stepKey === 'ocr_extraction' && 'IC Marking Verify with OEM using PaddleOCR'}
+                      {stepKey === 'user_validation' && 'User Validation'}
+                    </div>
+                    <div className="step-message">{step.message}</div>
+                    {step.data && (
+                      <div className="step-data">
+                        {step.data.manufacturer && <span className="data-chip">{step.data.manufacturer}</span>}
+                        {step.data.marking && <span className="data-chip">{step.data.marking}</span>}
+                        {step.data.status && <span className={`data-chip status-${step.data.status}`}>{step.data.status}</span>}
+                        {step.data.manufacturer_match !== undefined && (
+                          <span className={`match-badge ${step.data.manufacturer_match ? 'match' : 'mismatch'}`}>
+                            {step.data.manufacturer_match ? '✓ Manufacturer Match' : '✗ Manufacturer Mismatch'}
+                          </span>
+                        )}
+                        {step.data.part_number_match !== undefined && (
+                          <span className={`match-badge ${step.data.part_number_match ? 'match' : 'mismatch'}`}>
+                            {step.data.part_number_match ? '✓ Part Number Match' : '✗ Part Number Mismatch'}
+                          </span>
+                        )}
+                        {step.data.source && (
+                          <span className={`data-chip source-${step.data.source}`}>
+                            {step.data.source === 'nexar' ? '🌐 Nexar Web' : '💾 Local DB'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {step.status === 'processing' && (
+                    <div className="step-spinner"></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Results Display */}
-        {result && (
+        {result && status === 'completed' && (
           <div className="results-container">
             {/* Primary Result Card - Match with Detect's style */}
             {result.userValidation && (
               <>
-                <div className={`result-card ${result.userValidation.matches_expectations ? 'result-genuine' : 'result-fake'}`}>
-                  <div className="result-icon" aria-hidden>
+                {/* Big Genuine/Fake Result Banner */}
+                <div className={`big-result-banner result-${result.userValidation.matches_expectations ? 'genuine' : 'fake'}`}>
+                  <div className="big-result-icon">
                     {result.userValidation.matches_expectations ? '✓' : '✗'}
                   </div>
-                  <h4 className="result-title">
-                    {result.userValidation.matches_expectations ? 'IC matches user expectations' : 'IC does not match user expectations'}
-                  </h4>
-                  {result.manufacturer && (
-                    <p className="result-manufacturer">
-                      Detected: <strong>{result.manufacturer}</strong>
-                      {typeof result.confidence === 'number' && (
-                        <> ({(result.confidence * 100).toFixed(1)}% confidence)</>
-                      )}
-                    </p>
-                  )}
-                </div>
-
-                {/* Compact details in the shared info style */}
-                <div className="details-section validation-compact">
-                  <h5 className="section-title">✓ User Validation</h5>
-                  <div className="info-card">
-                    <div className="info-row">
-                      <span className="info-label">Manufacturer</span>
-                      <span className="info-value">
-                        Expected: <strong>{expectedManufacturer || 'N/A'}</strong>
-                        {" \u2022 "}
-                        Detected: <strong>{result.manufacturer || 'Not detected'}</strong>
-                        {" \u00A0"}
-                        <span className={`match-badge ${result.userValidation.manufacturer_match ? 'match' : 'mismatch'}`}>
-                          {result.userValidation.manufacturer_match ? '✓ Match' : '✗ Mismatch'}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="info-row">
-                      <span className="info-label">Part Number</span>
-                      <span className="info-value">
-                        Expected: <strong>{expectedPartNumber || 'N/A'}</strong>
-                        {" \u2022 "}
-                        Detected: <strong>{(result.marking && (result.marking.part_number || (result.marking.part_number?.part_number))) || 'Not detected'}</strong>
-                        {" \u00A0"}
-                        <span className={`match-badge ${result.userValidation.part_number_match ? 'match' : 'mismatch'}`}>
-                          {result.userValidation.part_number_match ? '✓ Match' : '✗ Mismatch'}
-                        </span>
-                      </span>
-                    </div>
-                    {result.userValidation.message && (
-                      <div className="info-row">
-                        <span className="info-label">Notes</span>
-                        <span className="info-value">{result.userValidation.message}</span>
-                      </div>
-                    )}
+                  <div className="big-result-text">
+                    {result.userValidation.matches_expectations ? 'GENUINE' : 'COUNTERFEIT'}
                   </div>
                 </div>
               </>
@@ -230,13 +308,15 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
 
             {/* Fallback: if userValidation missing, still show the detect-style main result card */}
             {!result.userValidation && (
-              <div className={`result-card result-${result.status}`}>
-                <div className="result-icon" aria-hidden>
+              <div className={`big-result-banner result-${result.status}`}>
+                <div className="big-result-icon">
                   {result.status === 'genuine' && '✓'}
                   {result.status === 'fake' && '✗'}
                   {result.status === 'error' && '!'}
                 </div>
-                <h4 className="result-title">{result.message}</h4>
+                <div className="big-result-text">
+                  {result.status === 'genuine' ? 'GENUINE' : result.status === 'fake' ? 'COUNTERFEIT' : 'ERROR'}
+                </div>
               </div>
             )}
 
@@ -248,6 +328,12 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
                 onResultChange(null);
                 setExpectedManufacturer('');
                 setExpectedPartNumber('');
+                setProgressSteps({
+                  preprocessing: { status: 'pending', message: 'Preprocessing image...', data: null },
+                  logo_detection: { status: 'pending', message: 'Detecting logo...', data: null },
+                  ocr_extraction: { status: 'pending', message: 'Extracting IC marking...', data: null },
+                  user_validation: { status: 'pending', message: 'Validating against user inputs...', data: null }
+                });
               }}
             >
               🔄 New Validation
