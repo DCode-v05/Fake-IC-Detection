@@ -2,10 +2,6 @@ import React, { useState } from 'react';
 import '../styles/InspectionDashboard.css';
 import { detectManufacturerStream } from '../services/api';
 
-/**
- * InspectionDashboard Component - Progressive UI
- * Shows real-time verification steps as they complete
- */
 function InspectionDashboard({ image, status, result, onStatusChange, onResultChange }) {
   const [error, setError] = useState(null);
   const [progressSteps, setProgressSteps] = useState({
@@ -24,7 +20,6 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
     onStatusChange('processing');
     setError(null);
     
-    // Reset progress steps
     setProgressSteps({
       preprocessing: { status: 'pending', message: 'Preprocessing image...', data: null },
       logo_detection: { status: 'pending', message: 'Detecting logo...', data: null },
@@ -42,9 +37,7 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
           return;
         }
         
-        // Update the specific step
         if (update.step && update.step !== 'complete') {
-          // Only update if the step exists in our progressSteps
           setProgressSteps(prev => {
             if (prev.hasOwnProperty(update.step)) {
               return {
@@ -60,10 +53,8 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
           });
         }
         
-        // Handle completion
         if (update.step === 'complete') {
           onStatusChange('completed');
-          // Build final result from progress data
           const finalResult = {
             status: update.final_status || 'fake',
             message: update.message,
@@ -97,7 +88,6 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
 
   return (
     <div className="inspection-dashboard">
-      {/* Header */}
       <div className="dashboard-header">
         <h3>🔍 IC Authenticity Inspector</h3>
         <span className={`status-badge status-${status}`}>
@@ -107,10 +97,8 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
         </span>
       </div>
 
-      {/* Main Content */}
       <div className="dashboard-content">
         
-        {/* Start Button */}
         {!result && status === 'idle' && (
           <div className="start-section">
             <button 
@@ -131,14 +119,12 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
           </div>
         )}
 
-        {/* Progressive Steps Display - Show during processing AND after completion */}
         {(status === 'processing' || status === 'completed') && (
           <div className="progress-steps">
             <h4 className="progress-title">
               {status === 'processing' ? 'Analysis Progress' : 'Analysis Complete'}
             </h4>
             
-            {/* Render steps in fixed order */}
             {['preprocessing', 'logo_detection', 'ocr_extraction', 'verification'].map((stepKey) => {
               const step = progressSteps[stepKey];
               if (!step) return null;
@@ -176,10 +162,8 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
           </div>
         )}
 
-        {/* Final Result Card - Show after completion */}
         {result && status === 'completed' && (
           <div className="final-result-section">
-            {/* Big Genuine/Fake Result */}
             <div className={`big-result-banner result-${result.status}`}>
               <div className="big-result-icon">
                 {result.status === 'genuine' ? '✓' : '✗'}
@@ -189,7 +173,6 @@ function InspectionDashboard({ image, status, result, onStatusChange, onResultCh
               </div>
             </div>
 
-            {/* New Inspection Button */}
             <button 
               className="btn-new-inspection"
               onClick={() => {

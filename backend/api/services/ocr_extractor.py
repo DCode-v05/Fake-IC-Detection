@@ -32,12 +32,8 @@ class OCRExtractor:
         try:
             from paddleocr import PaddleOCR
             
-            # Initialize PaddleOCR with optimized settings for SPEED
-            # use_angle_cls=False: Disable angle classification - MUCH FASTER (IC text is usually horizontal)
-            # lang='en': English language model
-            # GPU will be used automatically if paddlepaddle-gpu is installed
             self.ocr = PaddleOCR(
-                use_angle_cls=False,  # Disabled for SPEED - IC text is usually horizontal
+                use_angle_cls=False,
                 lang='en'
             )
             
@@ -62,14 +58,11 @@ class OCRExtractor:
         Returns:
             Preprocessed image optimized for OCR
         """
-        # Convert to grayscale if needed
         if len(image.shape) == 3:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
             gray = image.copy()
         
-        # Simple adaptive thresholding only (fastest method)
-        # Removed: CLAHE, denoising, sharpening - too slow!
         binary = cv2.adaptiveThreshold(
             gray,
             255,
@@ -106,7 +99,6 @@ class OCRExtractor:
             }
         
         try:
-            # Load image
             if not os.path.exists(image_path):
                 return {
                     "success": False,
@@ -120,26 +112,21 @@ class OCRExtractor:
                     "error": "Failed to load image"
                 }
             
-            # Skip preprocessing for SPEED - PaddleOCR is optimized enough
-            # Only preprocess if explicitly requested
             if preprocess:
                 processed_image = self.preprocess_image_for_ocr(image)
             else:
                 processed_image = image
             
-            # Perform OCR (cls=False for speed - angle classification disabled)
             result = self.ocr.ocr(processed_image, cls=False)
             
-            # Parse results
             extracted_text = []
             confidence_scores = []
             bounding_boxes = []
             
             if result and result[0]:
                 for line in result[0]:
-                    # Each line format: [bbox, (text, confidence)]
-                    bbox = line[0]  # Bounding box coordinates
-                    text_info = line[1]  # (text, confidence)
+                    bbox = line[0]
+                    text_info = line[1]
                     
                     text = text_info[0]
                     confidence = text_info[1]
@@ -148,7 +135,6 @@ class OCRExtractor:
                     confidence_scores.append(confidence)
                     bounding_boxes.append(bbox)
             
-            # Concatenate all text
             full_text = ' '.join(extracted_text)
             
             return {
@@ -186,16 +172,13 @@ class OCRExtractor:
             }
         
         try:
-            # Skip preprocessing for SPEED
             if preprocess:
                 processed_image = self.preprocess_image_for_ocr(image_array)
             else:
                 processed_image = image_array
             
-            # Perform OCR (cls=False for speed)
             result = self.ocr.ocr(processed_image, cls=False)
             
-            # Parse results (same as extract_text)
             extracted_text = []
             confidence_scores = []
             bounding_boxes = []
@@ -243,28 +226,22 @@ class OCRExtractor:
             Path to annotated image or None if failed
         """
         try:
-            # Extract text
             ocr_result = self.extract_text(image_path, preprocess=False)
             
             if not ocr_result["success"]:
                 return None
             
-            # Load original image
             image = cv2.imread(image_path)
             
-            # Draw bounding boxes and text
             for bbox, text, conf in zip(
                 ocr_result["bounding_boxes"],
                 ocr_result["extracted_text"],
                 ocr_result["confidence_scores"]
             ):
-                # Convert bbox to integer coordinates
                 points = np.array(bbox, dtype=np.int32)
                 
-                # Draw bounding box
                 cv2.polylines(image, [points], isClosed=True, color=(0, 255, 0), thickness=2)
                 
-                # Draw text and confidence
                 label = f"{text} ({conf:.2f})"
                 cv2.putText(
                     image,
@@ -276,7 +253,6 @@ class OCRExtractor:
                     2
                 )
             
-            # Save annotated image
             if output_path is None:
                 base_name = os.path.splitext(image_path)[0]
                 output_path = f"{base_name}_ocr_annotated.jpg"
@@ -289,7 +265,6 @@ class OCRExtractor:
             return None
 
 
-# Singleton instance
 def get_ocr_extractor():
     """Get OCR extractor singleton instance"""
     return OCRExtractor()

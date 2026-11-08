@@ -9,8 +9,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ic_detection.settings')
 
 application = get_wsgi_application()
 
-# Pre-load OCR models at startup for faster response times
-# Only load in the main process (not in Django auto-reloader child processes)
 if os.environ.get('RUN_MAIN') == 'true' or os.environ.get('RUN_MAIN') is None:
     print("\n" + "="*60)
     print("🚀 INITIALIZING OCR MODELS AT STARTUP...")
@@ -22,7 +20,6 @@ if os.environ.get('RUN_MAIN') == 'true' or os.environ.get('RUN_MAIN') is None:
         from api.services.ic_verifier import get_verifier
         from api.utils.database import create_database
         
-        # Initialize all services
         ocr_extractor = get_ocr_extractor()
         print("✅ OCR Extractor loaded successfully")
         

@@ -8,7 +8,6 @@ import requests
 from typing import Dict, Optional, Any
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 GRAPHQL_URL = "https://api.nexar.com/graphql"
@@ -44,7 +43,6 @@ class NexarService:
             return False
         
         try:
-            # Simple query to test connection
             query = """
             query {
               __schema {
@@ -94,14 +92,12 @@ class NexarService:
             return None
         
         try:
-            # Build search query (combine part number and manufacturer if provided)
             search_query = part_number
             if manufacturer:
                 search_query = f"{manufacturer} {part_number}"
             
             print(f"🔍 Searching Nexar for: '{search_query}'")
             
-            # GraphQL query for IC search
             query = """
             query searchIC($q: String!, $limit: Int) {
               supSearchMpn(q: $q, limit: $limit) {
@@ -156,9 +152,8 @@ class NexarService:
                 "Content-Type": "application/json"
             }
             
-            # Make API request with retry logic
             max_retries = 2
-            timeout = 30  # 30 second timeout
+            timeout = 30
             response = None
             
             for attempt in range(max_retries):
@@ -169,7 +164,7 @@ class NexarService:
                         headers=headers,
                         timeout=timeout
                     )
-                    break  # Success, exit retry loop
+                    break
                 except requests.exceptions.Timeout:
                     if attempt < max_retries - 1:
                         print(f"⚠️  Nexar API timeout (attempt {attempt + 1}/{max_retries}), retrying...")
@@ -181,7 +176,6 @@ class NexarService:
                     print(f"❌ Nexar API request error: {e}")
                     return None
             
-            # Check if response was successfully obtained
             if response is None:
                 print(f"❌ Nexar API request failed - no response received")
                 return None
@@ -203,17 +197,14 @@ class NexarService:
             
             data = response.json()
             
-            # Debug: Print response structure
             if not data:
                 print(f"⚠️  Empty response from Nexar API")
                 return None
             
-            # Check for errors
             if 'errors' in data:
                 print(f"❌ Nexar GraphQL error: {data['errors']}")
                 return None
             
-            # Extract results with safety checks
             if 'data' not in data:
                 print(f"⚠️  No 'data' field in Nexar response")
                 return None
@@ -234,13 +225,11 @@ class NexarService:
                 print(f"ℹ️  No results found in Nexar for: {search_query}")
                 return None
             
-            # Check if first result is valid
             first_result = results[0] if results else None
             if not first_result:
                 print(f"ℹ️  No valid results in Nexar for: {search_query}")
                 return None
             
-            # Process and return first matching result
             return self._process_result(first_result, part_number)
             
         except requests.exceptions.JSONDecodeError as e:
@@ -269,29 +258,23 @@ class NexarService:
         Returns:
             Processed part information
         """
-        # Safety check
         if not result or not isinstance(result, dict):
             print(f"⚠️  Invalid result format from Nexar API")
             return None
         
         part = result.get('part', {})
         
-        # Extract manufacturer info
         manufacturer_data = part.get('manufacturer') or {}
         manufacturer_name = manufacturer_data.get('name', 'Unknown') if isinstance(manufacturer_data, dict) else 'Unknown'
         
-        # Extract part number
         mpn = part.get('mpn', search_part_number)
         
-        # Extract description
         description = part.get('shortDescription') or ''
         
-        # Extract category
         category_data = part.get('category') or {}
         category = category_data.get('name', 'Unknown') if isinstance(category_data, dict) else 'Unknown'
         category_path = category_data.get('path', '') if isinstance(category_data, dict) else ''
         
-        # Extract specifications
         specs = {}
         for spec in (part.get('specs') or []):
             if not isinstance(spec, dict):
@@ -303,12 +286,10 @@ class NexarService:
             if attr_name:
                 specs[attr_name] = spec.get('value')
         
-        # Extract availability
         total_avail = part.get('totalAvail') or 0
         
-        # Extract sellers info
         sellers = []
-        for seller in (part.get('sellers') or [])[:3]:  # Limit to 3 sellers
+        for seller in (part.get('sellers') or [])[:3]:
             if not isinstance(seller, dict):
                 continue
             company = seller.get('company') or {}
@@ -333,7 +314,7 @@ class NexarService:
                         'currency': price.get('currency') or 'USD'
                     })
             
-            if seller_info['inventory'] > 0:  # Only include sellers with stock
+            if seller_info['inventory'] > 0:
                 sellers.append(seller_info)
         
         return {
@@ -379,7 +360,7 @@ class NexarService:
                 'message': f'Part found in Nexar database',
                 'part_info': result,
                 'available': result.get('in_stock', False),
-                'confidence': 0.9  # High confidence if found in Nexar
+                'confidence': 0.9
             }
         else:
             return {
@@ -391,7 +372,6 @@ class NexarService:
             }
 
 
-# Singleton instance
 _nexar_service = None
 
 def get_nexar_service() -> NexarService:

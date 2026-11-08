@@ -52,30 +52,25 @@ def validate_user_expectations(
         'details': {}
     }
     
-    # Validate manufacturer
     if expected_manufacturer:
         expected_mfr = expected_manufacturer.strip().upper()
         detected_mfr = detected_manufacturer.strip().upper()
         
-        # Check for exact match or substring match
         if expected_mfr == detected_mfr or expected_mfr in detected_mfr or detected_mfr in expected_mfr:
             result['manufacturer_match'] = True
             result['details']['manufacturer'] = f"✓ Match: Expected '{expected_manufacturer}', Detected '{detected_manufacturer}'"
         else:
             result['details']['manufacturer'] = f"✗ Mismatch: Expected '{expected_manufacturer}', but detected '{detected_manufacturer}'"
     
-    # Validate part number
     if expected_part_number:
         expected_part = expected_part_number.strip().upper().replace(' ', '').replace('-', '')
         
-        # Extract detected part number from parsed marking
         detected_part = None
         if parsed_marking and parsed_marking.get('success'):
             part_info = parsed_marking.get('part_number')
             if part_info and isinstance(part_info, dict):
                 detected_part = part_info.get('part_number', '').strip().upper().replace(' ', '').replace('-', '')
         
-        # Also check raw OCR text
         ocr_text = ocr_result.get('full_text', '').upper().replace(' ', '').replace('-', '')
         
         if detected_part and (expected_part == detected_part or expected_part in detected_part or detected_part in expected_part):
@@ -87,9 +82,7 @@ def validate_user_expectations(
         else:
             result['details']['part_number'] = f"✗ Mismatch: Expected '{expected_part_number}', but found '{detected_part or 'None'}'"
     
-    # Determine overall match
     if expected_manufacturer and expected_part_number:
-        # Both provided - both must match
         result['matches_expectations'] = result['manufacturer_match'] and result['part_number_match']
         if result['matches_expectations']:
             result['message'] = f"✓ IC matches user expectations: {expected_manufacturer} {expected_part_number}"
@@ -101,14 +94,12 @@ def validate_user_expectations(
                 mismatches.append(f"part number (expected {expected_part_number})")
             result['message'] = f"✗ IC does NOT match user expectations - Mismatch in {', '.join(mismatches)}"
     elif expected_manufacturer:
-        # Only manufacturer provided
         result['matches_expectations'] = result['manufacturer_match']
         if result['matches_expectations']:
             result['message'] = f"✓ Manufacturer matches user expectation: {expected_manufacturer}"
         else:
             result['message'] = f"✗ Manufacturer mismatch: Expected {expected_manufacturer}, detected {detected_manufacturer}"
     elif expected_part_number:
-        # Only part number provided
         result['matches_expectations'] = result['part_number_match']
         if result['matches_expectations']:
             result['message'] = f"✓ Part number matches user expectation: {expected_part_number}"
@@ -118,7 +109,6 @@ def validate_user_expectations(
     return result
 
 
-# Initialize services (singleton pattern)
 ocr_logo_detector = None
 database = None
 ocr_extractor = None
@@ -131,7 +121,6 @@ def initialize_services():
     """
     global ocr_logo_detector, database, ocr_extractor, ic_verifier
     
-    # Initialize OCR extractor first (needed by OCR logo detector)
     if ocr_extractor is None:
         ocr_extractor = get_ocr_extractor()
         print("✓ OCR extractor initialized")
@@ -163,7 +152,6 @@ def detect_manufacturer_stream(request):
     from django.http import StreamingHttpResponse
     import time
     
-    # Parse multipart form data first
     uploaded_file = request.FILES.get('image')
     expected_manufacturer = request.POST.get('expected_manufacturer', None)
     expected_part_number = request.POST.get('expected_part_number', None)
@@ -171,15 +159,12 @@ def detect_manufacturer_stream(request):
     def event_stream():
         """Generator function that yields SSE-formatted progress updates"""
         try:
-            # Initialize services
             initialize_services()
             
-            # Check if image file is present
             if not uploaded_file:
                 yield f"data: {json.dumps({'error': 'No image file provided', 'step': 'error'})}\n\n"
                 return
             
-            # Step 1: Image Preprocessing
             yield f"data: {json.dumps({'step': 'preprocessing', 'status': 'processing', 'message': 'Preprocessing image...'})}\n\n"
             time.sleep(0.5)
             
@@ -193,7 +178,6 @@ def detect_manufacturer_stream(request):
             
             yield f"data: {json.dumps({'step': 'preprocessing', 'status': 'completed', 'message': 'Image ready for analysis ✓'})}\n\n"
             
-            # Step 2: Logo Detection
             yield f"data: {json.dumps({'step': 'logo_detection', 'status': 'processing', 'message': 'Detecting manufacturer logo...'})}\n\n"
             time.sleep(0.5)
             
@@ -211,7 +195,6 @@ def detect_manufacturer_stream(request):
             
             yield f"data: {json.dumps({'step': 'logo_detection', 'status': 'completed', 'message': f'{manufacturer}', 'data': {'manufacturer': manufacturer, 'confidence': float(confidence)}})}\n\n"
             
-            # Step 3: OCR Extraction
             yield f"data: {json.dumps({'step': 'ocr_extraction', 'status': 'processing', 'message': 'Extracting IC markings...'})}\n\n"
             time.sleep(0.5)
             
@@ -225,10 +208,7 @@ def detect_manufacturer_stream(request):
             
             ic_marking = ocr_result.get('full_text', 'N/A')
             
-            # First, send OCR as processing (yellow)
-            # We'll update it later based on verification result
             
-            # Step 4: Database Verification
             yield f"data: {json.dumps({'step': 'verification', 'status': 'processing', 'message': 'Verifying authenticity...'})}\n\n"
             time.sleep(0.5)
             
@@ -252,23 +232,20 @@ def detect_manufacturer_stream(request):
                         logo_confidence=confidence
                     )
                     
-                    # Check if part number was found in database
                     if verification_result:
                         details = verification_result.get('details', {})
                         part_found_in_db = details.get('part_number_valid', False)
             
-            # Determine status and verification step status
-            final_status = 'fake'  # lowercase for frontend compatibility
+            final_status = 'fake'
             final_message = f"Detected as {manufacturer} logo"
-            verification_step_status = 'completed'  # Default to completed
-            ocr_step_status = 'completed'  # Default to completed
-            verification_source = 'local'  # Track where verification came from
+            verification_step_status = 'completed'
+            ocr_step_status = 'completed'
+            verification_source = 'local'
             
             if verification_result:
                 authenticity = verification_result.get('authenticity', 'fake')
                 details = verification_result.get('details', {})
                 
-                # Check verification source (Nexar vs Local)
                 verified_via = details.get('verified_via', '')
                 if 'Nexar' in verified_via or 'Web' in verified_via:
                     verification_source = 'nexar'
@@ -276,9 +253,8 @@ def detect_manufacturer_stream(request):
                     verification_source = 'local'
                 
                 if authenticity == 'genuine':
-                    final_status = 'genuine'  # lowercase for frontend
+                    final_status = 'genuine'
                     
-                    # Different messages based on source
                     if verification_source == 'nexar':
                         final_message = f"❌ NOT FOUND IN LOCAL DATABASE✅ VERIFIED VIA NEXAR WEB DATABASE"
                     else:
@@ -287,31 +263,26 @@ def detect_manufacturer_stream(request):
                     verification_step_status = 'completed'
                     ocr_step_status = 'completed'
                 else:
-                    final_status = 'fake'  # lowercase for frontend
+                    final_status = 'fake'
                     final_message = f"❌ FAKE DETECTED"
-                    verification_step_status = 'failed'  # Mark as failed for fake ICs
+                    verification_step_status = 'failed'
                     
-                    # If part not found in DB, mark OCR extraction as failed too
                     if not part_found_in_db:
                         ocr_step_status = 'failed'
             else:
-                # No verification result means failure
                 verification_step_status = 'failed'
                 ocr_step_status = 'failed'
                 final_status = 'fake'
                 final_message = f"❌ FAKE DETECTED"
             
-            # Now update OCR step with final status (green if found, red if not found in DB)
             yield f"data: {json.dumps({'step': 'ocr_extraction', 'status': ocr_step_status, 'message': f'{ic_marking[:50]}', 'data': {'marking': ic_marking}})}\n\n"
             
-            # Send verification result with source information
             verification_data = {
                 'status': final_status,
                 'source': verification_source
             }
             yield f"data: {json.dumps({'step': 'verification', 'status': verification_step_status, 'message': final_message, 'data': verification_data})}\n\n"
             
-            # User Validation (if expected values provided)
             user_validation = None
             if expected_manufacturer or expected_part_number:
                 user_validation = validate_user_expectations(
@@ -322,7 +293,6 @@ def detect_manufacturer_stream(request):
                     ocr_result=ocr_result
                 )
             
-            # Final step: Complete
             time.sleep(0.3)
             complete_data = {
                 'step': 'complete',
@@ -360,10 +330,8 @@ def detect_manufacturer(request):
     - Return results
     """
     try:
-        # Initialize services
         initialize_services()
         
-        # Check if image file is present
         if 'image' not in request.FILES:
             return JsonResponse({
                 'success': False,
@@ -372,13 +340,11 @@ def detect_manufacturer(request):
         
         uploaded_file = request.FILES['image']
         
-        # Get optional user inputs for validation
         expected_manufacturer = request.POST.get('expected_manufacturer', None)
         expected_part_number = request.POST.get('expected_part_number', None)
         
         print(f"📝 User Input - Manufacturer: {expected_manufacturer}, Part Number: {expected_part_number}")
         
-        # Validate image
         is_valid, error_message = validate_image(uploaded_file)
         if not is_valid:
             return JsonResponse({
@@ -386,13 +352,10 @@ def detect_manufacturer(request):
                 'error': error_message
             }, status=400)
         
-        # Save uploaded image
         image_path = save_uploaded_image(uploaded_file)
         
-        # Load image
         original_image = load_image_from_file(image_path)
         
-        # OPTIMIZED: Single OCR pass for both logo detection AND marking extraction (MUCH FASTER!)
         print("⚡ Using optimized combined OCR extraction...")
         combined_result = ocr_logo_detector.detect_and_extract_combined(original_image, min_confidence=0.5)
         
@@ -402,13 +365,11 @@ def detect_manufacturer(request):
                 'error': combined_result['logo_detection'].get('error', 'No manufacturer logo text detected')
             }, status=400)
         
-        # Extract logo detection result
         detection_result = combined_result['logo_detection']
         marking_result = combined_result['marking_extraction']
         
         print(f"✓ Completed in 1 OCR pass (was 2 passes before) - {combined_result.get('total_ocr_calls', 1)} call(s)")
         
-        # Get prediction result from OCR logo detector
         prediction_result = {
             'manufacturer': detection_result['manufacturer'],
             'confidence': detection_result['confidence'],
@@ -417,7 +378,6 @@ def detect_manufacturer(request):
             'all_probabilities': {detection_result['manufacturer']: detection_result['confidence']}
         }
         
-        # Get top 3 predictions (all manufacturer matches found)
         all_matches = detection_result.get('all_matches', [])
         top_predictions = sorted(
             [{'manufacturer': m['manufacturer'], 'confidence': m['confidence']} 
@@ -426,39 +386,33 @@ def detect_manufacturer(request):
             reverse=True
         )[:3]
         
-        # Get cropped logo region for display
         bbox = detection_result.get('bbox')
         if bbox:
             x1, y1, x2, y2 = bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]
-            # Convert PIL Image to numpy array for slicing
             img_array = np.array(original_image)
             cropped_logo = img_array[y1:y2, x1:x2]
         else:
             cropped_logo = np.array(original_image)
         
-        # Use the extracted marking text from combined result (already extracted in single OCR pass!)
         ocr_result = {
             'success': marking_result['success'],
-            'full_text': marking_result.get('raw_text', ''),  # Parser expects 'full_text'
+            'full_text': marking_result.get('raw_text', ''),
             'raw_text': marking_result.get('raw_text', ''),
-            'extracted_text': [region['text'] for region in marking_result.get('text_regions', [])],  # Parser expects list of strings
+            'extracted_text': [region['text'] for region in marking_result.get('text_regions', [])],
             'text_regions': marking_result.get('text_regions', [])
         }
         
         print(f"📋 OCR Result for parser: full_text='{ocr_result['full_text']}', extracted_text={ocr_result['extracted_text']}")
         
-        # Step 3: Parse IC markings
         parsed_marking = None
         verification_result = None
         
         if ocr_result.get("success"):
-            # Get known parts for the detected manufacturer
             manufacturer_parts = ic_verifier.get_manufacturer_parts(prediction_result['manufacturer'])
             
             print(f"📋 Manufacturer parts found: {len(manufacturer_parts) if manufacturer_parts else 0}")
             
             if manufacturer_parts:
-                # Parse the extracted text
                 parsed_marking = parse_marking(
                     ocr_result=ocr_result,
                     manufacturer=prediction_result['manufacturer'],
@@ -468,7 +422,6 @@ def detect_manufacturer(request):
                 print(f"📋 Parsed marking type: {type(parsed_marking)}")
                 print(f"📋 Parsed marking: {parsed_marking}")
                 
-                # Step 7: Verify IC authenticity
                 verification_result = ic_verifier.comprehensive_verification(
                     parsed_marking=parsed_marking,
                     manufacturer=prediction_result['manufacturer'],
@@ -477,10 +430,8 @@ def detect_manufacturer(request):
                 
                 print(f"📋 Verification result: {verification_result}")
         
-        # Convert images to base64 for response
         cropped_logo_base64 = image_to_base64(cropped_logo)
         
-        # USER INPUT VALIDATION (NEW FEATURE)
         user_validation = None
         if expected_manufacturer or expected_part_number:
             user_validation = validate_user_expectations(
@@ -492,17 +443,15 @@ def detect_manufacturer(request):
             )
             print(f"👤 User validation result: {user_validation}")
         
-        # Determine final status based on verification - ONLY TWO OPTIONS: genuine or fake
-        final_status = 'fake'  # Default to fake until proven genuine
+        final_status = 'fake'
         final_message = f"Detected as {prediction_result['manufacturer']} logo"
         
-        # If user validation exists, override status based on user expectations
         if user_validation:
             if user_validation['matches_expectations']:
-                final_status = 'genuine'  # Matches expectations = Genuine
+                final_status = 'genuine'
                 final_message = user_validation['message']
             else:
-                final_status = 'fake'  # Doesn't match = Fake
+                final_status = 'fake'
                 final_message = user_validation['message']
         elif verification_result:
             authenticity = verification_result.get('authenticity', 'fake')
@@ -510,11 +459,9 @@ def detect_manufacturer(request):
                 final_status = 'genuine'
                 final_message = f"✅ VERIFIED AS GENUINE {prediction_result['manufacturer']} IC"
             else:
-                # Anything not genuine = fake
                 final_status = 'fake'
                 final_message = f"❌ FAKE IC DETECTED - Markings do not match authorized database"
         
-        # Save to database (include verification results)
         inspection_data = {
             'original_filename': uploaded_file.name,
             'image_path': image_path,
@@ -534,7 +481,6 @@ def detect_manufacturer(request):
         
         inspection_id = database.add_inspection(inspection_data)
         
-        # Prepare comprehensive response
         response_data = {
             'success': True,
             'inspection_id': inspection_id,
@@ -554,15 +500,14 @@ def detect_manufacturer(request):
                 'success': ocr_result.get('success', False),
                 'extracted_text': ocr_result.get('text_regions', []),
                 'full_text': ocr_result.get('raw_text', ''),
-                'confidence': 0.0,  # Will be calculated if needed
+                'confidence': 0.0,
                 'total_detections': ocr_result.get('total_regions', 0)
             } if ocr_result else None,
-            'marking_analysis': None,  # Will be populated below if valid
+            'marking_analysis': None,
             'verification': verification_result,
-            'user_validation': user_validation  # NEW: Include user validation results
+            'user_validation': user_validation
         }
         
-        # Safely add marking_analysis if available
         if parsed_marking and isinstance(parsed_marking, dict):
             try:
                 response_data['marking_analysis'] = {
@@ -598,14 +543,12 @@ def get_inspection_history(request):
     try:
         initialize_services()
         
-        # Get limit from query params
         limit = request.GET.get('limit', 50)
         try:
             limit = int(limit)
         except ValueError:
             limit = 50
         
-        # Get inspections
         inspections = database.get_all_inspections(limit=limit)
         
         return JsonResponse({

@@ -77,11 +77,9 @@ class ICVerifier:
         
         manufacturers = self.database.get("manufacturers", {})
         
-        # Try exact match first
         if manufacturer in manufacturers:
             return manufacturers[manufacturer].get("parts", [])
         
-        # Try case-insensitive match
         for mfr_name, mfr_data in manufacturers.items():
             if mfr_name.lower() == manufacturer.lower():
                 return mfr_data.get("parts", [])
@@ -106,9 +104,7 @@ class ICVerifier:
         """
         parts = self.get_manufacturer_parts(manufacturer)
         
-        # Try local database first
         if parts:
-            # Check each part
             for part in parts:
                 if part["PartNo"].upper() == part_number.upper():
                     return {
@@ -120,7 +116,6 @@ class ICVerifier:
                         "package": part.get("Package", [])
                     }
         
-        # Not found in local database - try Nexar as fallback
         print(f"🌐 Part {part_number} not found locally, checking Nexar database...")
         nexar_service = get_nexar_service()
         nexar_result = nexar_service.verify_part(part_number, manufacturer)
@@ -140,7 +135,6 @@ class ICVerifier:
                 "sellers": part_info.get('seller_count', 0)
             }
         
-        # Not found in either database
         return {
             "valid": False,
             "source": "not_found",
@@ -172,7 +166,6 @@ class ICVerifier:
                 "reason": "Manufacturer not found"
             }
         
-        # Find the part
         matched_part = None
         for part in parts:
             if part["PartNo"].upper() == part_number.upper():
@@ -185,7 +178,6 @@ class ICVerifier:
                 "reason": "Part number not found"
             }
         
-        # Check suffix
         valid_suffixes = matched_part.get("Suffixes", [])
         
         for valid_suffix in valid_suffixes:
@@ -228,14 +220,12 @@ class ICVerifier:
         year = date_code.get("year")
         week = date_code.get("week")
         
-        # Check format validity
         if not year or not week:
             return {
                 "valid": False,
                 "reason": "Invalid date code format"
             }
         
-        # Check if date is reasonable (not in future)
         current_year = datetime.now().year
         current_week = datetime.now().isocalendar()[1]
         
@@ -253,7 +243,6 @@ class ICVerifier:
                 "suspicious": True
             }
         
-        # Check if date is too old (ICs older than 20 years are suspicious)
         if year < current_year - 20:
             return {
                 "valid": True,
@@ -262,7 +251,6 @@ class ICVerifier:
                 "age_years": current_year - year
             }
         
-        # Week range validation
         if not (1 <= week <= 53):
             return {
                 "valid": False,
@@ -303,7 +291,6 @@ class ICVerifier:
                 "reason": "Manufacturer not found"
             }
         
-        # Find the part
         matched_part = None
         for part in parts:
             if part["PartNo"].upper() == part_number.upper():
@@ -316,7 +303,6 @@ class ICVerifier:
                 "reason": "Part number not found"
             }
         
-        # Check country codes
         valid_countries = matched_part.get("AdditionalMarkings", {}).get("CountryCode", [])
         
         if country_code in valid_countries:
@@ -355,7 +341,7 @@ class ICVerifier:
             "manufacturer": manufacturer,
             "logo_confidence": logo_confidence,
             "verification_status": "unknown",
-            "authenticity": "fake",  # Default to fake until proven genuine
+            "authenticity": "fake",
             "confidence_score": 0.0,
             "validations": {},
             "warnings": [],
@@ -363,24 +349,19 @@ class ICVerifier:
             "details": {}
         }
         
-        # Check if parsing was successful
         if not parsed_marking.get("success"):
             result["verification_status"] = "failed"
             result["errors"].append("Failed to parse IC markings")
-            result["authenticity"] = "fake"  # Can't parse = Fake
+            result["authenticity"] = "fake"
             
-            # Try to extract any potential part numbers from raw text for Nexar lookup
             raw_text = parsed_marking.get("raw_text", "")
             if raw_text:
                 print(f"🔍 Attempting Nexar lookup with raw text: '{raw_text}'")
-                # Try to find part number patterns in raw text
                 import re
-                # Look for common part number patterns (alphanumeric sequences of 5+ chars)
                 potential_parts = re.findall(r'\b[A-Z0-9]{5,}\b', raw_text.upper())
                 
                 if potential_parts:
                     print(f"🔍 Found potential part numbers: {potential_parts}")
-                    # Try the first potential part number with Nexar
                     nexar_service = get_nexar_service()
                     for part_candidate in potential_parts:
                         nexar_result = nexar_service.verify_part(part_candidate, manufacturer)
@@ -404,28 +385,24 @@ class ICVerifier:
                             result["details"]["in_stock"] = part_info.get('in_stock', False)
                             result["details"]["sellers"] = part_info.get('seller_count', 0)
                             result["verification_status"] = "passed"
-                            result["authenticity"] = "genuine"  # Found in database = Genuine
-                            result["confidence_score"] = 0.70  # Meets minimum threshold
+                            result["authenticity"] = "genuine"
+                            result["confidence_score"] = 0.70
                             result["warnings"].append(
                                 f"Part {part_candidate} verified in Nexar database - {part_info.get('seller_count', 0)} authorized sellers"
                             )
                             result["warnings"].append("Marking parsing failed, but part verified in web database")
-                            result["errors"] = []  # Clear error since we found it
+                            result["errors"] = []
                             return result
             
-            # If Nexar lookup failed but we have manufacturer detection and OCR text
-            # If part numbers were extracted but not found in ANY database = FAKE
             if manufacturer and logo_confidence > 0:
-                # Part not found in local DB or Nexar = FAKE
                 result["verification_status"] = "failed"
-                result["authenticity"] = "fake"  # Not in database = Fake
-                result["confidence_score"] = 0.0  # No verification = 0% confidence
+                result["authenticity"] = "fake"
+                result["confidence_score"] = 0.0
                 result["details"]["detected_manufacturer"] = manufacturer
                 result["details"]["manufacturer_confidence"] = logo_confidence
                 result["details"]["extracted_text"] = raw_text
                 result["details"]["detection_method"] = "Logo and OCR"
                 
-                # Add extracted text info
                 if potential_parts:
                     result["details"]["potential_parts"] = potential_parts
                     result["warnings"].append(f"Potential part numbers detected: {', '.join(potential_parts)}")
@@ -445,7 +422,6 @@ class ICVerifier:
         
         scores = []
         
-        # Validate part number
         part_info = parsed_marking.get("part_number")
         if part_info:
             part_validation = self.validate_part_number(
@@ -455,7 +431,6 @@ class ICVerifier:
             result["validations"]["part_number"] = part_validation
             result["details"]["part_number"] = part_info["part_number"]
             
-            # Add web verification info if from Nexar
             if part_validation.get("source") == "nexar_web":
                 result["details"]["verified_via"] = "Nexar Web Database"
                 result["details"]["web_availability"] = part_validation.get("availability", 0)
@@ -474,7 +449,6 @@ class ICVerifier:
         else:
             result["errors"].append("Part number not detected")
         
-        # Validate suffix
         suffix_info = parsed_marking.get("suffix")
         if suffix_info and part_info:
             suffix_validation = self.validate_suffix(
@@ -490,7 +464,6 @@ class ICVerifier:
             else:
                 result["warnings"].append(suffix_validation["reason"])
         
-        # Validate date code
         date_code = parsed_marking.get("date_code")
         if date_code and part_info:
             date_validation = self.validate_date_code(
@@ -508,7 +481,6 @@ class ICVerifier:
             else:
                 result["errors"].append(date_validation["reason"])
         
-        # Validate country code
         country_code = parsed_marking.get("country_code")
         if country_code and part_info:
             country_validation = self.validate_country_code(
@@ -524,23 +496,17 @@ class ICVerifier:
             else:
                 result["warnings"].append(country_validation["reason"])
         
-        # Calculate confidence score
         if scores:
-            # Include logo detection confidence
             scores.append(logo_confidence)
             result["confidence_score"] = sum(scores) / len(scores)
         
-        # Determine authenticity - ONLY TWO OPTIONS: Genuine or Fake
         if result["errors"]:
-            # Any errors = Fake IC
             result["authenticity"] = "fake"
             result["verification_status"] = "failed"
         elif result["confidence_score"] >= 0.70:
-            # High confidence = Genuine IC
             result["authenticity"] = "genuine"
             result["verification_status"] = "passed"
         else:
-            # Below threshold = Fake IC (better safe than sorry)
             result["authenticity"] = "fake"
             result["verification_status"] = "failed"
             if not result["errors"]:
@@ -549,7 +515,6 @@ class ICVerifier:
         return result
 
 
-# Convenience function
 def get_verifier():
     """Get IC verifier singleton instance"""
     return ICVerifier()

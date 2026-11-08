@@ -46,27 +46,22 @@ import cv2
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
-# -------------------------
-# CONFIG
-# -------------------------
-ROOT = Path(__file__).parent.parent  # Project root
-DATASET_DIR = ROOT / "Dataset"          # your logo folders (class subfolders)
-BACKGROUNDS_DIR = ROOT / "backgrounds"  # optional backgrounds; if missing, script auto-generates
-OUT_DIR = ROOT / "dataset_synth"        # output synthetic dataset
-IMG_SIZE = (1280, 720)                  # output image size (WxH); adjust for tiny logos use larger W,H
-NUM_IMAGES = 600                        # total synthetic images (reduced for faster testing - increase to 1200+ for production)
-MAX_LOGOS_PER_IMAGE = 3                 # number of logos to paste per image
-MIN_SCALE = 0.03                        # min logo scale relative to image width (for small logos)
-MAX_SCALE = 0.18                        # max logo scale relative to image width
+ROOT = Path(__file__).parent.parent
+DATASET_DIR = ROOT / "Dataset"
+BACKGROUNDS_DIR = ROOT / "backgrounds"
+OUT_DIR = ROOT / "dataset_synth"
+IMG_SIZE = (1280, 720)
+NUM_IMAGES = 600
+MAX_LOGOS_PER_IMAGE = 3
+MIN_SCALE = 0.03
+MAX_SCALE = 0.18
 TRAIN_SPLIT = 0.85
 RANDOM_SEED = 42
 
-# YOLO training params
 YOLO_EPOCHS = 60
 YOLO_IMG_SIZE = 640
-YOLO_MODEL = "yolov8n.pt"  # pretrained base; ultralytics will download if missing
+YOLO_MODEL = "yolov8n.pt"
 
-# Create output directories
 (images_out := OUT_DIR / "images").mkdir(parents=True, exist_ok=True)
 (labels_out := OUT_DIR / "labels").mkdir(parents=True, exist_ok=True)
 (images_out / "train").mkdir(exist_ok=True)
@@ -74,9 +69,6 @@ YOLO_MODEL = "yolov8n.pt"  # pretrained base; ultralytics will download if missi
 (labels_out / "train").mkdir(exist_ok=True)
 (labels_out / "val").mkdir(exist_ok=True)
 
-# -------------------------
-# Helper utilities
-# -------------------------
 def list_logo_classes(dataset_dir: Path):
     """
     Returns list of (class_name, list_of_valid_images)
@@ -86,9 +78,7 @@ def list_logo_classes(dataset_dir: Path):
     for cls in sorted([p for p in dataset_dir.iterdir() if p.is_dir()]):
         valid_imgs = []
         for p in cls.iterdir():
-            # Only accept PNG and JPG, skip SVG and AVIF
             if p.suffix.lower() in [".png", ".jpg", ".jpeg"]:
-                # Verify image can be loaded
                 try:
                     test_img = Image.open(p)
                     test_img.verify()
@@ -114,16 +104,12 @@ def load_backgrounds(bg_dir: Path):
     return bgs
 
 def generate_metallic_background(size=(1280,720)):
-    # Create random noise background + gaussian blur + color tint to mimic chip surface
     w,h = size
-    # noise
     arr = (np.random.randn(h, w) * 20 + 128).clip(0,255).astype(np.uint8)
     img = Image.fromarray(arr).convert("RGB")
-    # embossed-like effect
     img = img.filter(ImageFilter.GaussianBlur(radius=1.5))
     enhancer = ImageEnhance.Contrast(img)
     img = enhancer.enhance(0.9)
-    # add subtle gradient
     grad = Image.new("L", (1, h))
     for y in range(h):
         grad.putpixel((0,y), int(255 * (0.5 + 0.5 * math.sin(y / (h/6)))))
@@ -133,38 +119,26 @@ def generate_metallic_background(size=(1280,720)):
     return img
 
 def augment_logo(logo_img: Image.Image):
-    # Convert to grayscale-ish etched look with random transforms
-    # Input: PIL Image (RGB or RGBA)
     img = logo_img.convert("RGBA")
-    # resize down/up a bit
     scale_jitter = random.uniform(0.9, 1.1)
     new_w = int(img.width * scale_jitter)
     new_h = int(img.height * scale_jitter)
     img = img.resize((max(1,new_w), max(1,new_h)), Image.LANCZOS)
-    # random rotation
     angle = random.uniform(-30, 30)
     img = img.rotate(angle, resample=Image.BICUBIC, expand=True)
-    # reduce color to single channel (simulate etched monochrome)
     gray = ImageOps.grayscale(img)
-    # apply contrast and thresholding sometimes
     if random.random() < 0.6:
         gray = ImageOps.autocontrast(gray, cutoff=random.randint(0,5))
-    # occasionally emboss or edge enhance
     if random.random() < 0.35:
         gray = gray.filter(ImageFilter.EDGE_ENHANCE_MORE)
-    # add slight blur to simulate mark roughness
     if random.random() < 0.4:
         gray = gray.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.5,1.2)))
-    # convert back to RGBA where white areas are transparent (so logo blends)
-    # We invert so dark strokes remain opaque
     arr = np.array(gray).astype(np.uint8)
-    # create alpha where dark strokes are opaque
     alpha = (255 - arr).clip(0,255)
     rgba = np.dstack([arr, arr, arr, alpha])
     return Image.fromarray(rgba)
 
 def paste_logo_on_bg(bg: Image.Image, logo: Image.Image, position, opacity=1.0):
-    # logo is RGBA; bg is RGB
     x, y = position
     logo = logo.copy()
     if opacity < 1.0:
@@ -178,7 +152,6 @@ def create_synthetic_image(index, classes, backgrounds):
     Create one synthetic image by pasting 1..MAX_LOGOS_PER_IMAGE logos on a background
     Returns: (filename, list_of_labels) where each label is (class_id, x_center, y_center, w, h) normalized
     """
-    # pick background
     if backgrounds and random.random() < 0.9:
         bg = random.choice(backgrounds).copy().resize(IMG_SIZE)
     else:
@@ -187,9 +160,8 @@ def create_synthetic_image(index, classes, backgrounds):
     W, H = IMG_SIZE
     labels = []
     num_logos = random.randint(1, MAX_LOGOS_PER_IMAGE)
-    placed_regions = []  # avoid heavy overlaps (basic)
+    placed_regions = []
     for _ in range(num_logos):
-        # pick a random class and random logo from class
         class_idx = random.randrange(len(classes))
         class_name, logo_list = classes[class_idx]
         logo_path = random.choice(logo_list)
@@ -201,24 +173,19 @@ def create_synthetic_image(index, classes, backgrounds):
             continue
             
         logo_aug = augment_logo(logo_img)
-        # random scale relative to image width
         scale = random.uniform(MIN_SCALE, MAX_SCALE)
         max_logo_w = int(W * scale)
-        # keep aspect ratio
         aspect = logo_aug.width / max(1, logo_aug.height)
         new_w = max(12, min(max_logo_w, logo_aug.width))
         new_h = max(12, int(new_w / aspect))
         logo_resized = logo_aug.resize((new_w, new_h), Image.LANCZOS)
-        # pick a position avoiding edges and big overlaps
         attempts = 0
         while attempts < 30:
             x = random.randint(10, W - new_w - 10)
             y = random.randint(10, H - new_h - 10)
             bbox = (x, y, x+new_w, y+new_h)
-            # minimal overlap rule
             overlap = False
             for r in placed_regions:
-                # IoU approx
                 ax1, ay1, ax2, ay2 = bbox
                 bx1, by1, bx2, by2 = r
                 inter_w = max(0, min(ax2,bx2)-max(ax1,bx1))
@@ -230,26 +197,20 @@ def create_synthetic_image(index, classes, backgrounds):
             if not overlap:
                 break
             attempts += 1
-        # paste
         opacity = random.uniform(0.7, 1.0)
         paste_logo_on_bg(bg, logo_resized, (x,y), opacity=opacity)
         placed_regions.append(bbox)
-        # compute normalized YOLO format label
         x_center = (x + x + new_w) / 2.0 / W
         y_center = (y + y + new_h) / 2.0 / H
         w_norm = new_w / W
         h_norm = new_h / H
         labels.append((class_idx, x_center, y_center, w_norm, h_norm))
 
-    # minor global noise / vignette to mimic photo conditions
     if random.random() < 0.6:
         enhancer = ImageEnhance.Brightness(bg)
         bg = enhancer.enhance(random.uniform(0.9, 1.05))
     return bg, labels
 
-# -------------------------
-# MAIN: build synthetic dataset
-# -------------------------
 def build_synthetic_dataset():
     random.seed(RANDOM_SEED)
     classes = list_logo_classes(DATASET_DIR)
@@ -258,11 +219,10 @@ def build_synthetic_dataset():
     class_names = [c[0] for c in classes]
     print(f"✓ Detected {len(classes)} classes:", class_names)
 
-    # backgrounds
     backgrounds = load_backgrounds(BACKGROUNDS_DIR)
     print(f"✓ Loaded {len(backgrounds)} background images")
 
-    image_meta = []  # list of tuples (img_path, label_path)
+    image_meta = []
     print(f"\n🎨 Generating {NUM_IMAGES} synthetic images...")
     for i in tqdm(range(NUM_IMAGES), desc="Creating synthetic dataset"):
         img, labels = create_synthetic_image(i, classes, backgrounds)
@@ -271,19 +231,16 @@ def build_synthetic_dataset():
         img_path = images_out / img_name
         label_path = labels_out / label_name
         img.save(img_path, quality=90)
-        # write yolo labels: class_id x_center y_center w h
         with open(label_path, "w") as f:
             for lbl in labels:
                 cls_idx, xc, yc, wn, hn = lbl
                 f.write(f"{cls_idx} {xc:.6f} {yc:.6f} {wn:.6f} {hn:.6f}\n")
         image_meta.append((img_path, label_path))
 
-    # split train/val
     train_meta, val_meta = train_test_split(image_meta, train_size=TRAIN_SPLIT, random_state=RANDOM_SEED)
     
     print(f"\n📊 Splitting dataset: {len(train_meta)} train, {len(val_meta)} val")
     
-    # move files into train/val folders
     for img_path, label_path in tqdm(train_meta, desc="Moving train files"):
         (images_out / "train" / img_path.name).write_bytes(img_path.read_bytes())
         (labels_out / "train" / label_path.name).write_text(label_path.read_text())
@@ -291,7 +248,6 @@ def build_synthetic_dataset():
         (images_out / "val" / img_path.name).write_bytes(img_path.read_bytes())
         (labels_out / "val" / label_path.name).write_text(label_path.read_text())
 
-    # Cleanup top-level images/labels (keep only train/val folders)
     for p in images_out.iterdir():
         if p.is_file():
             p.unlink()
@@ -299,7 +255,6 @@ def build_synthetic_dataset():
         if p.is_file():
             p.unlink()
 
-    # Write names file & data.yaml for YOLO
     names_file = OUT_DIR / "data.names"
     with open(names_file, "w") as f:
         for n in class_names:
@@ -313,7 +268,6 @@ def build_synthetic_dataset():
         "nc": len(class_names),
         "names": class_names
     }
-    # Write YAML in simple format
     import yaml
     with open(data_yaml, "w") as f:
         yaml.dump(data_content, f)
@@ -322,18 +276,13 @@ def build_synthetic_dataset():
     print(f"✓ data.yaml written at: {data_yaml}")
     return data_yaml
 
-# -------------------------
-# TRAIN YOLO (ultralytics)
-# -------------------------
 def train_yolo(data_yaml):
-    # dynamic import to delay if ultralytics not installed
     try:
         from ultralytics import YOLO
         import torch
     except Exception as e:
         raise RuntimeError("Install ultralytics (pip install ultralytics) to train YOLOv8.") from e
 
-    # Check GPU availability
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"\n{'='*60}")
     print(f"🚀 Starting YOLOv8 training on {device.upper()}")
@@ -351,24 +300,21 @@ def train_yolo(data_yaml):
     print(f"   Image size: {YOLO_IMG_SIZE}")
     print(f"{'='*60}\n")
     
-    # Use a pretrained small yolov8n backbone for speed. Training will fine-tune for classes.
-    model = YOLO(YOLO_MODEL)  # this downloads weights if needed
+    model = YOLO(YOLO_MODEL)
     
-    # Training: specify the data yaml, epochs, img size and where to save results
-    # GPU-optimized settings
     results = model.train(
         data=str(data_yaml), 
         epochs=YOLO_EPOCHS, 
         imgsz=YOLO_IMG_SIZE, 
         name="yolov8_logo_run",
-        patience=10,  # early stopping
+        patience=10,
         save=True,
         plots=True,
-        device=device,  # Explicitly use GPU
-        batch=16 if device == 'cuda' else 8,  # Larger batch for GPU
-        workers=4 if device == 'cuda' else 2,  # More workers for GPU
-        amp=True,  # Automatic Mixed Precision for faster training on GPU
-        cache=True,  # Cache images in RAM for faster training
+        device=device,
+        batch=16 if device == 'cuda' else 8,
+        workers=4 if device == 'cuda' else 2,
+        amp=True,
+        cache=True,
         verbose=True
     )
     
@@ -382,9 +328,6 @@ def train_yolo(data_yaml):
     
     return results
 
-# -------------------------
-# SIMPLE INFERENCE SNIPPET
-# -------------------------
 def inference_demo(model_path: str, img_path: str, conf_thres=0.25):
     from ultralytics import YOLO
     import cv2
@@ -400,7 +343,6 @@ def inference_demo(model_path: str, img_path: str, conf_thres=0.25):
         label = model.names[int(cls)]
         print(f"   {label}: conf={float(conf):.3f}, bbox=({x1},{y1},{x2},{y2})")
     
-    # draw and show
     im = cv2.imread(img_path)
     for box, conf, cls in zip(res.boxes.xyxy, res.boxes.conf, res.boxes.cls):
         x1,y1,x2,y2 = map(int, box.tolist())
@@ -412,9 +354,6 @@ def inference_demo(model_path: str, img_path: str, conf_thres=0.25):
     cv2.imwrite(str(outp), im)
     print(f"\n✓ Saved demo output to: {outp}")
 
-# -------------------------
-# ENTRY
-# -------------------------
 if __name__ == "__main__":
     print("="*60)
     print("  YOLOv8 IC Logo Detection - Training Pipeline")

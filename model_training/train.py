@@ -7,7 +7,6 @@ Run this script to start training
 import sys
 import os
 
-# Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import torch
@@ -25,23 +24,17 @@ def main():
     print("IC LOGO DETECTION - TRAINING PIPELINE")
     print("=" * 60 + "\n")
     
-    # Set random seed for reproducibility
     torch.manual_seed(config.RANDOM_SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(config.RANDOM_SEED)
     print(f"✓ Random seed set to: {config.RANDOM_SEED}\n")
     
-    # Create necessary directories
     config.create_directories()
     print()
     
-    # Print configuration
     config.print_config()
     print()
     
-    # ===========================
-    # 1. DATA PREPARATION
-    # ===========================
     print("STEP 1: Preparing Dataset")
     print("-" * 60)
     
@@ -49,14 +42,10 @@ def main():
     dataset = preprocessor.load_dataset()
     train_loader = preprocessor.create_dataloaders(dataset)
     
-    # Get class names
     class_names = preprocessor.get_class_names(dataset)
     print(f"\nDetected IC Manufacturers: {class_names}")
     print()
     
-    # ===========================
-    # 2. MODEL CREATION
-    # ===========================
     print("STEP 2: Creating Model")
     print("-" * 60)
     
@@ -65,18 +54,12 @@ def main():
     model = classifier.move_to_device(model)
     classifier.get_model_summary(model)
     
-    # ===========================
-    # 3. TRAINING
-    # ===========================
     print("STEP 3: Training Model")
     print("-" * 60)
     
     trainer = Trainer(model, train_loader, config)
     train_losses, train_accuracies = trainer.train()
     
-    # ===========================
-    # 4. SAVE TRAINING HISTORY
-    # ===========================
     print("STEP 4: Saving Training History")
     print("-" * 60)
     
@@ -104,9 +87,6 @@ def main():
     
     print(f"✓ Training history saved to: {history_path}\n")
     
-    # ===========================
-    # 5. FINAL SUMMARY
-    # ===========================
     print("=" * 60)
     print("TRAINING PIPELINE COMPLETED SUCCESSFULLY!")
     print("=" * 60)

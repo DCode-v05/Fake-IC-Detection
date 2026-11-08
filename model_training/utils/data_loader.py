@@ -37,31 +37,24 @@ class DataPreprocessor:
             torchvision.transforms.Compose: Transformation pipeline
         """
         transform_pipeline = transforms.Compose([
-            # Convert to 3-channel grayscale (required for EfficientNet)
             transforms.Grayscale(num_output_channels=3),
             
-            # Random rotation for varied IC orientations
             transforms.RandomRotation(self.config.ROTATION_DEGREES),
             
-            # Random resized crop for scale invariance
             transforms.RandomResizedCrop(
                 self.config.IMAGE_SIZE,
                 scale=(self.config.CROP_SCALE_MIN, self.config.CROP_SCALE_MAX)
             ),
             
-            # Random horizontal flip for data augmentation
             transforms.RandomHorizontalFlip(),
             
-            # Color jitter for lighting variations
             transforms.ColorJitter(
                 brightness=self.config.BRIGHTNESS_FACTOR,
                 contrast=self.config.CONTRAST_FACTOR
             ),
             
-            # Convert to tensor
             transforms.ToTensor(),
             
-            # Normalize pixel values
             transforms.Normalize(
                 self.config.NORMALIZE_MEAN,
                 self.config.NORMALIZE_STD
@@ -132,7 +125,6 @@ class DataPreprocessor:
         use_validation = use_validation or self.config.USE_VALIDATION
         
         if use_validation:
-            # Split dataset into train and validation
             total_size = len(dataset)
             val_size = int(total_size * self.config.VALIDATION_SPLIT)
             train_size = total_size - val_size
@@ -167,7 +159,6 @@ class DataPreprocessor:
             return train_loader, val_loader
         
         else:
-            # Create only training DataLoader
             train_loader = DataLoader(
                 dataset,
                 batch_size=self.config.BATCH_SIZE,

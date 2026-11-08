@@ -16,7 +16,6 @@ class OCRLogoDetector:
     Uses PaddleOCR for text detection + recognition
     """
     
-    # Manufacturer text patterns (case-insensitive matching)
     MANUFACTURER_KEYWORDS = {
         "Texas Instruments": [
             r'\bTI\b',
@@ -32,7 +31,7 @@ class OCRLogoDetector:
         "NXP Semiconductors": [
             r'\bNXP\b',
             r'\bNXP\s*SEMICONDUCTORS?\b',
-            r'\bPHILIPS\b'  # NXP was formerly Philips Semiconductors
+            r'\bPHILIPS\b'
         ],
         "ON Semiconductor": [
             r'\bON\b',
@@ -43,57 +42,56 @@ class OCRLogoDetector:
         "Microchip": [
             r'\bMICROCHIP\b',
             r'\bMCHP\b',
-            r'\bATMEL\b'  # Microchip acquired Atmel
+            r'\bATMEL\b'
         ],
         "Infineon": [
             r'\bINFINEON\b',
             r'\bIFX\b',
-            r'\bSIEMENS\b'  # Infineon was formerly Siemens Semiconductors
+            r'\bSIEMENS\b'
         ]
     }
     
-    # Part number prefixes for manufacturer inference (last resort fallback)
     PART_NUMBER_PREFIXES = {
         "STMicroelectronics": [
-            r'^STM\d',      # STM32F103, STM8S...
-            r'^STM',        # General ST prefix
-            r'^L\d{3}',     # L6599, L7805 voltage regulators
-            r'^M\d{2}[A-Z]', # M24C02, M93C46 EEPROMs
-            r'^[6-9]\d{6}', # ST lot/date codes: 6007329, 7123456, etc.
-            r'^[6-9]\s*\d{6}' # ST lot codes with space: "6 007329"
+            r'^STM\d',
+            r'^STM',
+            r'^L\d{3}',
+            r'^M\d{2}[A-Z]',
+            r'^[6-9]\d{6}',
+            r'^[6-9]\s*\d{6}'
         ],
         "Texas Instruments": [
-            r'^TPS\d',      # TPS54620 power
-            r'^LM\d',       # LM324, LM358 op-amps
-            r'^TL\d',       # TL072, TL494
-            r'^SN\d',       # SN74HC595
-            r'^TMS\d',      # TMS320 DSP
-            r'^MSP\d'       # MSP430 MCU
+            r'^TPS\d',
+            r'^LM\d',
+            r'^TL\d',
+            r'^SN\d',
+            r'^TMS\d',
+            r'^MSP\d'
         ],
         "Microchip": [
-            r'^PIC\d',      # PIC16F, PIC18F
-            r'^ATMEGA\d',   # ATmega328P
-            r'^ATTINY\d',   # ATtiny85
-            r'^MCP\d',      # MCP23017
-            r'^24[LC]'      # 24LC256 EEPROM
+            r'^PIC\d',
+            r'^ATMEGA\d',
+            r'^ATTINY\d',
+            r'^MCP\d',
+            r'^24[LC]'
         ],
         "NXP Semiconductors": [
-            r'^LPC\d',      # LPC1768 ARM
-            r'^MK\d',       # MK20DX Kinetis
-            r'^PCF\d',      # PCF8574 I/O expander
-            r'^TDA\d',      # TDA audio chips
-            r'^74[A-Z]+'    # 74HC series logic
+            r'^LPC\d',
+            r'^MK\d',
+            r'^PCF\d',
+            r'^TDA\d',
+            r'^74[A-Z]+'
         ],
         "ON Semiconductor": [
-            r'^NCP\d',      # NCP1117 regulators
-            r'^MC\d',       # MC34063 switcher
-            r'^CAT\d'       # CAT24C series
+            r'^NCP\d',
+            r'^MC\d',
+            r'^CAT\d'
         ],
         "Infineon": [
-            r'^TLE\d',      # TLE4905 sensors
-            r'^IRL\d',      # IRLZ44N MOSFETs
-            r'^IR[FG]\d',   # IRF640, IRG4PC40W
-            r'^BSC\d'       # BSC series
+            r'^TLE\d',
+            r'^IRL\d',
+            r'^IR[FG]\d',
+            r'^BSC\d'
         ]
     }
     
@@ -127,16 +125,13 @@ class OCRLogoDetector:
             return []
         
         try:
-            # Convert to numpy array if needed
             if isinstance(image, Image.Image):
                 image = np.array(image)
             elif isinstance(image, str):
                 image = np.array(Image.open(image))
             
-            # Run OCR detection + recognition (without cls parameter)
             result = self.ocr_extractor.ocr.ocr(image)
             
-            # Debug: Print result structure
             print(f"📊 OCR Result Type: {type(result)}")
             if result:
                 print(f"📊 OCR Result Length: {len(result)}")
@@ -147,19 +142,15 @@ class OCRLogoDetector:
                 print("⚠ OCR returned None or empty result")
                 return []
             
-            # Handle PaddleX OCRResult object
             ocr_result_obj = result[0] if len(result) > 0 else None
             
             if ocr_result_obj is None:
                 print("⚠ OCR result[0] is None")
                 return []
             
-            # Extract text data from OCRResult object
             text_regions = []
             
-            # Check if it's a PaddleX OCRResult object (has rec_texts attribute)
             if hasattr(ocr_result_obj, 'rec_texts') or (isinstance(ocr_result_obj, dict) and 'rec_texts' in ocr_result_obj):
-                # PaddleX format
                 if hasattr(ocr_result_obj, 'rec_texts'):
                     rec_texts = ocr_result_obj.rec_texts
                     rec_scores = ocr_result_obj.rec_scores if hasattr(ocr_result_obj, 'rec_scores') else []
@@ -172,7 +163,6 @@ class OCRLogoDetector:
                 print(f"📊 Detected Texts: {rec_texts}")
                 print(f"📊 Confidence Scores: {rec_scores}")
                 
-                # Process each detected text
                 for i, text in enumerate(rec_texts):
                     if not text:
                         continue
@@ -181,7 +171,6 @@ class OCRLogoDetector:
                     poly = rec_polys[i] if i < len(rec_polys) else None
                     
                     if poly is not None and len(poly) >= 4:
-                        # Convert polygon to bounding box
                         x_coords = [point[0] for point in poly]
                         y_coords = [point[1] for point in poly]
                         
@@ -199,40 +188,32 @@ class OCRLogoDetector:
                 
                 return text_regions
             
-            # Fallback: Handle old PaddleOCR format (list of [bbox, (text, score)])
             elif isinstance(ocr_result_obj, (list, tuple)):
                 ocr_data = ocr_result_obj
                 
                 for line in ocr_data:
                     if line and len(line) >= 2:
                         try:
-                            bbox = line[0]  # [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
-                            text_info = line[1]  # Should be (text, confidence)
+                            bbox = line[0]
+                            text_info = line[1]
                             
-                            # Handle different text_info formats
                             if isinstance(text_info, str):
-                                # If text_info is just a string (text only, no confidence)
                                 text = text_info
-                                confidence = 1.0  # Default confidence
+                                confidence = 1.0
                             elif isinstance(text_info, (list, tuple)) and len(text_info) >= 2:
-                                # Normal format: (text, confidence)
                                 text = str(text_info[0]) if text_info[0] else ""
                                 confidence = float(text_info[1]) if text_info[1] else 0.0
                             elif isinstance(text_info, dict):
-                                # Dictionary format
                                 text = str(text_info.get('text', ''))
                                 confidence = float(text_info.get('confidence', 0.0))
                             else:
-                                # Unknown format
                                 print(f"⚠ Unexpected text_info type: {type(text_info)}, value: {text_info}")
                                 continue
                             
-                            # Validate bbox structure
                             if not bbox or len(bbox) < 4:
                                 print(f"⚠ Invalid bbox structure: {bbox}")
                                 continue
                             
-                            # Calculate bounding box (top-left and bottom-right)
                             x_coords = [point[0] for point in bbox]
                             y_coords = [point[1] for point in bbox]
                             
@@ -245,7 +226,7 @@ class OCRLogoDetector:
                                     'x2': int(max(x_coords)),
                                     'y2': int(max(y_coords))
                                 },
-                                'bbox_coords': bbox  # Original polygon coordinates
+                                'bbox_coords': bbox
                             })
                         except Exception as line_error:
                             print(f"⚠ Error processing OCR line: {line_error}")
@@ -271,7 +252,6 @@ class OCRLogoDetector:
         """
         text_upper = text.upper().strip()
         
-        # Skip empty strings
         if not text_upper:
             return None
         
@@ -279,9 +259,6 @@ class OCRLogoDetector:
             for pattern in patterns:
                 try:
                     if re.search(pattern, text_upper, re.IGNORECASE):
-                        # Calculate confidence based on pattern specificity
-                        # Longer matches = higher confidence
-                        # Remove regex special characters for length calculation
                         clean_pattern = re.sub(r'\\[bsw]|\?|\*|\+|\||\[|\]|\(|\)|\{|\}', '', pattern)
                         pattern_length = len(clean_pattern)
                         confidence = min(0.95, 0.75 + (pattern_length / 100))
@@ -305,19 +282,15 @@ class OCRLogoDetector:
         """
         text_upper = text.upper().strip()
         
-        # Skip very short strings (likely noise)
         if len(text_upper) < 3:
             return None
         
-        # Remove common non-alphanumeric characters
         clean_text = re.sub(r'[^A-Z0-9]', '', text_upper)
         
         for manufacturer, prefixes in self.PART_NUMBER_PREFIXES.items():
             for prefix_pattern in prefixes:
                 try:
                     if re.match(prefix_pattern, clean_text, re.IGNORECASE):
-                        # Lower confidence for part number inference (60-75%)
-                        # Longer pattern matches = higher confidence
                         clean_pattern = re.sub(r'[\^\$\[\]\(\)\{\}\?\*\+\|\\]', '', prefix_pattern)
                         pattern_length = len(clean_pattern)
                         confidence = min(0.75, 0.60 + (pattern_length / 50))
@@ -344,53 +317,41 @@ class OCRLogoDetector:
         if not text_regions or len(text_regions) == 0:
             return None
         
-        # Extract all detected text fragments
         all_texts = [r.get('text', '').upper().strip() for r in text_regions if r.get('text')]
         all_texts_combined = ' '.join(all_texts)
         
         print(f"🔍 Visual pattern analysis on: {all_texts}")
         
-        # STMicroelectronics graphical logo patterns
-        # The stylized "ST" logo often gets OCR'd as fragments like "S", "T", or similar shapes
         st_indicators = 0
         
-        # Check for exact short matches (likely logo text)
         for text in all_texts:
-            # Direct ST matches
             if text in ['S', 'ST', 'T', '5', '5T', 'S1', '51']:
                 st_indicators += 2
                 print(f"  ✓ ST indicator: exact match '{text}'")
-            # OCR often misreads ST as "US", "U5", "05", etc.
             elif text in ['US', 'U5', 'OS', 'O5', 'GS']:
                 st_indicators += 2
                 print(f"  ✓ ST indicator: OCR misread '{text}' (likely ST)")
-            # ST substring in short text
             elif len(text) <= 3 and 'ST' in text:
                 st_indicators += 3
                 print(f"  ✓ ST indicator: contains 'ST' - '{text}'")
         
-        # Check for part numbers starting with common ST prefixes
         for text in all_texts:
-            # Check if starts with 6, 7, 8, or 9 followed by digits (ST date/lot codes)
             if re.match(r'^[6-9]\d{5,}', text):
                 st_indicators += 1
                 print(f"  ✓ ST indicator: potential lot code '{text}'")
         
-        # Sometimes the ST logo shape is recognized as single characters
         if len(all_texts) <= 4:
             for text in all_texts:
                 if text in ['6', 'C', 'G', 'O', 'E']:
                     st_indicators += 1
                     print(f"  ✓ ST indicator: shape fragment '{text}'")
-                    break  # Only count once
+                    break
             
         if st_indicators >= 2:
             confidence = min(0.85, 0.65 + (st_indicators * 0.05))
             print(f"🎯 Visual pattern match: STMicroelectronics (indicators: {st_indicators}, confidence: {confidence:.2f})")
             return ("STMicroelectronics", confidence)
         
-        # Texas Instruments triangle logo patterns
-        # Often recognized as "TI", "△", or geometric shapes
         ti_indicators = 0
         for text in all_texts:
             if text in ['TI', 'T', 'I', 'T.I', 'T.', '.I', '1I', 'T1']:
@@ -405,7 +366,6 @@ class OCRLogoDetector:
             print(f"🎯 Visual pattern match: Texas Instruments (indicators: {ti_indicators}, confidence: {confidence:.2f})")
             return ("Texas Instruments", confidence)
         
-        # NXP logo patterns (often has distinctive "NXP" or angular shapes)
         for text in all_texts:
             if text in ['NXP', 'NX', 'XP']:
                 print(f"🎯 Visual pattern match: NXP Semiconductors (text: '{text}')")
@@ -437,7 +397,6 @@ class OCRLogoDetector:
                 'confidence': 0.0
             }
         
-        # Extract all text regions
         text_regions = self._extract_text_regions(image)
         
         if not text_regions:
@@ -449,8 +408,7 @@ class OCRLogoDetector:
                 'all_text': []
             }
         
-        # Filter by OCR confidence (relaxed threshold for visual patterns)
-        valid_regions = [r for r in text_regions if r.get('confidence', 0) >= min_confidence * 0.6]  # 60% of threshold
+        valid_regions = [r for r in text_regions if r.get('confidence', 0) >= min_confidence * 0.6]
         
         if not valid_regions:
             return {
@@ -461,7 +419,6 @@ class OCRLogoDetector:
                 'all_text_regions': text_regions
             }
         
-        # STRATEGY 1: Try text-based manufacturer matching
         manufacturer_matches = []
         logo_text_regions = []
         marking_text_regions = []
@@ -475,7 +432,6 @@ class OCRLogoDetector:
             
             if match:
                 manufacturer, match_confidence = match
-                # Combined confidence: OCR confidence * pattern match confidence
                 combined_confidence = region['confidence'] * match_confidence
                 
                 manufacturer_matches.append({
@@ -488,10 +444,8 @@ class OCRLogoDetector:
                 })
                 logo_text_regions.append(region)
             else:
-                # Non-logo text (likely part numbers, date codes, etc.)
                 marking_text_regions.append(region)
         
-        # STRATEGY 2: If no text match found, try visual pattern analysis
         if not manufacturer_matches:
             print("🔍 No text-based logo match, trying visual pattern analysis...")
             visual_match = self._analyze_visual_patterns(text_regions)
@@ -499,17 +453,12 @@ class OCRLogoDetector:
             if visual_match:
                 manufacturer, visual_confidence = visual_match
                 
-                # Find the most logo-like region (short text, not part numbers)
-                # Prefer short text that could be logo misreads (US, OS, etc.)
                 logo_like_regions = []
                 for r in text_regions:
                     text = r.get('text', '').upper().strip()
-                    # Logo text is typically short (1-3 characters)
-                    # Part numbers are longer (5+ characters or contain many digits)
                     if len(text) <= 3 and not re.match(r'^\d{5,}', text):
                         logo_like_regions.append(r)
                 
-                # Use the best logo-like region, or fall back to highest confidence
                 if logo_like_regions:
                     best_region = max(logo_like_regions, key=lambda r: r.get('confidence', 0))
                 else:
@@ -524,15 +473,12 @@ class OCRLogoDetector:
                     'detection_method': 'visual_pattern'
                 })
                 
-                # Mark short logo-like text as logo regions
                 logo_text_regions.extend(logo_like_regions)
-                # All other regions (including part numbers) are markings
                 marking_text_regions = [r for r in text_regions if r not in logo_like_regions]
                 
                 print(f"🏷️ Logo regions: {[r.get('text') for r in logo_like_regions]}")
                 print(f"📋 Marking regions: {[r.get('text') for r in marking_text_regions]}")
         
-        # STRATEGY 3: If still no match, try part number prefix inference
         if not manufacturer_matches:
             print("🔍 No visual pattern match, trying part number inference...")
             
@@ -557,9 +503,8 @@ class OCRLogoDetector:
                     })
                     logo_text_regions.append(region)
                     marking_text_regions = [r for r in text_regions if r != region]
-                    break  # Take first match
+                    break
         
-        # Get best manufacturer match
         if manufacturer_matches:
             best_match = max(manufacturer_matches, key=lambda x: x['confidence'])
             
@@ -607,17 +552,13 @@ class OCRLogoDetector:
         Returns:
             Dictionary with IC marking text
         """
-        # First detect logo to identify logo regions
         logo_result = self.detect_logo_text(image)
         
         if exclude_logo_regions and logo_result['success']:
-            # Return only non-logo text
             marking_regions = logo_result.get('marking_regions', [])
         else:
-            # Return all text
             marking_regions = logo_result.get('all_text_regions', [])
         
-        # Extract text from marking regions
         marking_text = []
         for region in marking_regions:
             marking_text.append({
@@ -626,7 +567,6 @@ class OCRLogoDetector:
                 'bbox': region['bbox']
             })
         
-        # Combine all text
         full_text = ' '.join([r['text'] for r in marking_regions])
         
         return {
@@ -653,7 +593,6 @@ class OCRLogoDetector:
         """
         print("⚡ FAST MODE: Combined logo detection + marking extraction (single OCR pass)")
         
-        # Single OCR pass for ALL text
         text_regions = self._extract_text_regions(image)
         
         if not text_regions:
@@ -666,24 +605,18 @@ class OCRLogoDetector:
         
         print(f"📊 Detected {len(text_regions)} text regions in single OCR pass")
         
-        # Process for logo detection
         logo_result = self._process_logo_detection(text_regions, min_confidence)
         
-        # Process for marking extraction (exclude logo regions)
         if logo_result['success']:
             logo_bbox = logo_result.get('bbox')
-            # Filter out logo regions from markings
             marking_regions = []
             for region in text_regions:
-                # Skip if this region is the logo
                 if logo_bbox and region['bbox'] == logo_bbox:
                     continue
                 marking_regions.append(region)
         else:
-            # No logo found, all regions are markings
             marking_regions = text_regions
         
-        # Build marking extraction result
         marking_text = []
         for region in marking_regions:
             marking_text.append({
@@ -708,7 +641,7 @@ class OCRLogoDetector:
             'logo_detection': logo_result,
             'marking_extraction': marking_result,
             'text_regions': text_regions,
-            'total_ocr_calls': 1  # Only 1 OCR call instead of 2!
+            'total_ocr_calls': 1
         }
     
     def _process_logo_detection(self, text_regions: List[Dict], min_confidence: float) -> Dict[str, Any]:
@@ -716,7 +649,6 @@ class OCRLogoDetector:
         Process text regions to detect manufacturer logo
         (Internal method used by detect_and_extract_combined)
         """
-        # Filter low confidence text
         valid_regions = [r for r in text_regions if r.get('confidence', 0) >= min_confidence]
         
         if not valid_regions:
@@ -724,13 +656,12 @@ class OCRLogoDetector:
         
         manufacturer_matches = []
         
-        # Try text matching first
         for region in valid_regions:
             text = region.get('text', '')
             if not text:
                 continue
             
-            text_match = self._match_manufacturer(text)  # Fixed: was _match_manufacturer_text
+            text_match = self._match_manufacturer(text)
             if text_match:
                 manufacturer, match_confidence = text_match
                 combined_confidence = region['confidence'] * match_confidence
@@ -744,7 +675,6 @@ class OCRLogoDetector:
                     'detection_method': 'text_pattern'
                 })
         
-        # If no matches, try part number inference
         if not manufacturer_matches:
             for region in valid_regions:
                 text = region.get('text', '')
@@ -768,7 +698,6 @@ class OCRLogoDetector:
         if not manufacturer_matches:
             return {'success': False, 'error': 'No manufacturer detected'}
         
-        # Get best match
         best_match = max(manufacturer_matches, key=lambda x: x['confidence'])
         
         return {
@@ -783,7 +712,6 @@ class OCRLogoDetector:
         }
 
 
-# Singleton instance
 _ocr_logo_detector = None
 
 

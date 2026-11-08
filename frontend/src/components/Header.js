@@ -1,10 +1,6 @@
 import React from 'react';
 import '../styles/Header.css';
 
-/**
- * Header Component
- * Displays the application title and navigation
- */
 function Header({ activeTab, onTabChange }) {
   return (
     <header className="header">
@@ -18,7 +14,6 @@ function Header({ activeTab, onTabChange }) {
             <p className="subtitle">Automated Optical Inspection System</p>
           </div>
         </div>
-        {/* Center brand text */}
         <div className="brand-center" aria-hidden>
           PixelAI
         </div>

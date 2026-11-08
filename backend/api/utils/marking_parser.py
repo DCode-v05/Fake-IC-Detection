@@ -28,14 +28,11 @@ class MarkingParser:
         if not text:
             return ""
         
-        # Convert to uppercase for consistency
         cleaned = text.upper()
         
-        # Remove common OCR artifacts
-        cleaned = cleaned.replace('|', 'I')  # Pipe to I
-        cleaned = cleaned.replace('0', 'O').replace('O', '0')  # Normalize O/0
+        cleaned = cleaned.replace('|', 'I')
+        cleaned = cleaned.replace('0', 'O').replace('O', '0')
         
-        # Remove extra whitespace
         cleaned = ' '.join(cleaned.split())
         
         return cleaned
@@ -54,9 +51,6 @@ class MarkingParser:
         Returns:
             Dictionary with year, week, raw_code or None if not found
         """
-        # Pattern for YYWW format (4 consecutive digits)
-        # YY: 00-99 (representing 2000-2099)
-        # WW: 01-53 (week of year)
         pattern = r'\b(\d{2})([0-5]\d)\b'
         
         matches = re.findall(pattern, text)
@@ -65,10 +59,8 @@ class MarkingParser:
             yy = match[0]
             ww = match[1]
             
-            # Validate week (01-53)
             week_num = int(ww)
             if 1 <= week_num <= 53:
-                # Construct full year (assume 2000s)
                 year = 2000 + int(yy)
                 
                 return {
@@ -112,7 +104,6 @@ class MarkingParser:
         best_position = -1
         
         for part in known_parts:
-            # Direct substring match (highest confidence)
             if part.upper() in text.upper():
                 position = text.upper().find(part.upper())
                 return {
@@ -123,14 +114,12 @@ class MarkingParser:
                     "match_type": "exact"
                 }
             
-            # Fuzzy matching for OCR errors
             ratio = MarkingParser.fuzzy_match(text, part)
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_match = part
                 best_position = 0
         
-        # Return fuzzy match if above threshold
         if best_ratio >= 0.75:
             return {
                 "part_number": best_match,
@@ -155,7 +144,6 @@ class MarkingParser:
             Dictionary with matched suffix, confidence or None
         """
         for suffix in known_suffixes:
-            # Check for exact match
             if suffix.upper() in text.upper():
                 position = text.upper().find(suffix.upper())
                 return {
@@ -165,7 +153,6 @@ class MarkingParser:
                     "match_type": "exact"
                 }
             
-            # Fuzzy match for suffixes
             ratio = MarkingParser.fuzzy_match(text, suffix)
             if ratio >= 0.8:
                 return {
@@ -188,7 +175,6 @@ class MarkingParser:
         Returns:
             Country code if found, None otherwise
         """
-        # Common country codes on ICs
         country_codes = [
             'USA', 'CHN', 'MYS', 'TWN', 'KOR', 'JPN', 'DEU',
             'PHL', 'THA', 'VNM', 'MLT', 'NLD', 'SGP'
@@ -230,47 +216,40 @@ class MarkingParser:
             "confidence": 0.0
         }
         
-        # Clean text
         cleaned_text = MarkingParser.clean_text(ocr_text)
         
-        # Extract date code
         date_code = MarkingParser.extract_date_code(cleaned_text)
         if date_code:
             result["date_code"] = date_code
         
-        # Extract country code
         country = MarkingParser.extract_country_code(cleaned_text)
         if country:
             result["country_code"] = country
         
-        # Find part number
         part_numbers = [part["PartNo"] for part in known_parts]
         part_match = MarkingParser.find_part_number(cleaned_text, part_numbers)
         
         if part_match:
             result["part_number"] = part_match
             
-            # Find corresponding part in database
             matched_part = None
             for part in known_parts:
                 if part["PartNo"] == part_match["part_number"]:
                     matched_part = part
                     break
             
-            # Find suffix
             if matched_part:
                 suffix_match = MarkingParser.find_suffix(cleaned_text, matched_part["Suffixes"])
                 if suffix_match:
                     result["suffix"] = suffix_match
         
-        # Calculate overall confidence
         confidences = []
         if result["part_number"]:
             confidences.append(result["part_number"]["confidence"])
         if result["suffix"]:
             confidences.append(result["suffix"]["confidence"])
         if result["date_code"]:
-            confidences.append(0.9)  # Date code found adds confidence
+            confidences.append(0.9)
         
         if confidences:
             result["confidence"] = sum(confidences) / len(confidences)
@@ -291,11 +270,9 @@ class MarkingParser:
             True if valid format, False otherwise
         """
         if expected_format == "YYWW":
-            # Check if 4 digits
             if not re.match(r'^\d{4}$', date_code):
                 return False
             
-            # Validate week range
             week = int(date_code[2:4])
             return 1 <= week <= 53
         
@@ -322,7 +299,6 @@ class MarkingParser:
         return None
 
 
-# Convenience functions
 def parse_marking(ocr_result: Dict[str, Any], manufacturer: str, known_parts: List[Dict]) -> Dict[str, Any]:
     """
     Convenience function to parse IC marking from OCR result

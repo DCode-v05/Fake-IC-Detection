@@ -45,12 +45,11 @@ class YOLOLogoDetector:
         try:
             from ultralytics import YOLO
             
-            # Model path: prioritize the newly trained model
             project_root = Path(__file__).parent.parent.parent.parent
             possible_paths = [
-                project_root / "trained_models" / "best.pt",  # Primary: newly trained model
-                project_root / "trained_models" / "yolo_logo_best.pt",  # Alternative name
-                project_root / "runs" / "detect" / "yolov8_logo_run" / "weights" / "best.pt",  # Training output
+                project_root / "trained_models" / "best.pt",
+                project_root / "trained_models" / "yolo_logo_best.pt",
+                project_root / "runs" / "detect" / "yolov8_logo_run" / "weights" / "best.pt",
                 project_root / "model_training" / "runs" / "detect" / "yolov8_logo_run" / "weights" / "best.pt",
             ]
             
@@ -70,9 +69,8 @@ class YOLOLogoDetector:
                 self.model = None
                 return
             
-            # Load YOLO model
             self.model = YOLO(str(self.model_path))
-            self.class_names = self.model.names  # Dictionary: {0: 'class1', 1: 'class2', ...}
+            self.class_names = self.model.names
             
             print(f"✓ YOLO Logo Detector initialized")
             print(f"  Model: {self.model_path.name}")
@@ -115,17 +113,14 @@ class YOLOLogoDetector:
             }
         
         try:
-            # Convert input to format YOLO accepts
             if isinstance(image, str):
                 image_path = image
             elif isinstance(image, Image.Image):
-                # Save temporarily
                 import tempfile
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
                 image.save(temp_file.name)
                 image_path = temp_file.name
             elif isinstance(image, np.ndarray):
-                # Convert numpy to PIL then save
                 import tempfile
                 pil_img = Image.fromarray(image)
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
@@ -138,7 +133,6 @@ class YOLOLogoDetector:
                     "detections": []
                 }
             
-            # Run YOLO inference
             results = self.model.predict(
                 source=image_path,
                 conf=conf_threshold,
@@ -146,7 +140,6 @@ class YOLOLogoDetector:
                 verbose=False
             )[0]
             
-            # Parse detections
             detections = []
             for box, conf, cls in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
                 x1, y1, x2, y2 = map(int, box.tolist())
@@ -168,13 +161,10 @@ class YOLOLogoDetector:
                     }
                 })
             
-            # Sort by confidence
             detections.sort(key=lambda d: d["confidence"], reverse=True)
             
-            # Get best detection (highest confidence)
             best_detection = detections[0] if detections else None
             
-            # Draw boxes on image for visualization
             image_with_boxes = self._draw_detections(image_path, detections)
             
             return {
@@ -215,11 +205,9 @@ class YOLOLogoDetector:
                 class_name = det["class_name"]
                 confidence = det["confidence"]
                 
-                # Draw rectangle
-                color = (0, 255, 0)  # Green
+                color = (0, 255, 0)
                 cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
                 
-                # Draw label
                 label = f"{class_name} {confidence:.2f}"
                 label_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
                 cv2.rectangle(img, (x1, y1 - label_size[1] - 10), (x1 + label_size[0], y1), color, -1)
@@ -243,7 +231,6 @@ class YOLOLogoDetector:
             Cropped logo as PIL Image or None
         """
         try:
-            # Convert to PIL if needed
             if isinstance(image, np.ndarray):
                 pil_img = Image.fromarray(image)
             elif isinstance(image, str):
@@ -251,11 +238,9 @@ class YOLOLogoDetector:
             else:
                 pil_img = image
             
-            # Extract bbox
             bbox = detection["bbox"]
             x1, y1, x2, y2 = bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]
             
-            # Crop with some padding
             padding = 10
             x1 = max(0, x1 - padding)
             y1 = max(0, y1 - padding)
@@ -304,13 +289,11 @@ class YOLOLogoDetector:
         }
 
 
-# Factory function
 def create_yolo_detector():
     """Get YOLO logo detector singleton instance"""
     return YOLOLogoDetector()
 
 
-# Alias for consistency with other services (ocr_extractor, ic_verifier)
 def get_yolo_detector():
     """Get YOLO logo detector singleton instance (alias)"""
     return create_yolo_detector()

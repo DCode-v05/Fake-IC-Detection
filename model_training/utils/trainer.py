@@ -33,11 +33,9 @@ class Trainer:
         self.val_loader = val_loader
         self.config = config_obj
         
-        # Training components
         self.criterion = None
         self.optimizer = None
         
-        # Tracking metrics
         self.train_losses = []
         self.train_accuracies = []
         self.val_losses = []
@@ -48,11 +46,9 @@ class Trainer:
         """
         Setup loss function and optimizer
         """
-        # Loss function (Cross Entropy for multi-class classification)
         self.criterion = nn.CrossEntropyLoss()
         print("✓ Loss Function: CrossEntropyLoss")
         
-        # Optimizer (Adam)
         self.optimizer = optim.Adam(
             self.model.parameters(),
             lr=self.config.LEARNING_RATE
@@ -74,7 +70,6 @@ class Trainer:
         correct = 0
         total = 0
         
-        # Progress bar
         loop = tqdm(
             self.train_loader,
             desc=f"Epoch [{epoch+1}/{self.config.EPOCHS}]",
@@ -82,33 +77,27 @@ class Trainer:
         )
         
         for batch_idx, (images, labels) in enumerate(loop):
-            # Move data to device
             images = images.to(self.config.DEVICE)
             labels = labels.to(self.config.DEVICE)
             
-            # Forward pass
             outputs = self.model(images)
             loss = self.criterion(outputs, labels)
             
-            # Backward pass and optimization
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
             
-            # Calculate metrics
             total_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
             
-            # Update progress bar
             current_acc = 100 * correct / total
             loop.set_postfix(
                 loss=loss.item(),
                 acc=current_acc
             )
         
-        # Calculate epoch metrics
         avg_loss = total_loss / len(self.train_loader)
         accuracy = 100 * correct / total
         
@@ -158,7 +147,6 @@ class Trainer:
             epoch: Current epoch number
             is_best: Whether this is the best model so far
         """
-        # Regular checkpoint
         if (epoch + 1) % self.config.SAVE_FREQUENCY == 0:
             checkpoint_path = os.path.join(
                 self.config.MODEL_SAVE_DIR,
@@ -173,7 +161,6 @@ class Trainer:
             }, checkpoint_path)
             print(f"  ✓ Checkpoint saved: {checkpoint_path}")
         
-        # Best model checkpoint
         if is_best:
             best_path = os.path.join(
                 self.config.MODEL_SAVE_DIR,
@@ -196,17 +183,13 @@ class Trainer:
         print("STARTING TRAINING")
         print("=" * 60)
         
-        # Setup training components
         self.setup_training()
         
-        # Training loop
         for epoch in range(self.config.EPOCHS):
-            # Train one epoch
             train_loss, train_acc = self.train_epoch(epoch)
             self.train_losses.append(train_loss)
             self.train_accuracies.append(train_acc)
             
-            # Validate if validation loader provided
             if self.val_loader is not None:
                 val_loss, val_acc = self.validate_epoch(epoch)
                 self.val_losses.append(val_loss)
@@ -216,7 +199,6 @@ class Trainer:
                 print(f"  Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}%")
                 print(f"  Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.2f}%")
                 
-                # Check if best model
                 is_best = val_acc > self.best_accuracy
                 if is_best:
                     self.best_accuracy = val_acc
@@ -225,17 +207,14 @@ class Trainer:
                 print(f"\nEpoch [{epoch+1}/{self.config.EPOCHS}] Summary:")
                 print(f"  Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}%")
                 
-                # Check if best model (based on training accuracy)
                 is_best = train_acc > self.best_accuracy
                 if is_best:
                     self.best_accuracy = train_acc
                     print(f"  ✓ New best training accuracy: {train_acc:.2f}%")
             
-            # Save checkpoints
             self.save_checkpoint(epoch, is_best)
             print()
         
-        # Save final model
         final_path = os.path.join(
             self.config.MODEL_SAVE_DIR,
             self.config.FINAL_MODEL_NAME

@@ -22,15 +22,12 @@ def save_uploaded_image(uploaded_file, upload_dir='media/uploads'):
     Returns:
         str: Path to saved file
     """
-    # Create upload directory if it doesn't exist
     os.makedirs(upload_dir, exist_ok=True)
     
-    # Generate unique filename
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"{timestamp}_{uploaded_file.name}"
     filepath = os.path.join(upload_dir, filename)
     
-    # Save file
     with open(filepath, 'wb+') as destination:
         for chunk in uploaded_file.chunks():
             destination.write(chunk)
@@ -82,7 +79,6 @@ def image_to_base64(image):
     Returns:
         str: Base64 encoded image
     """
-    # Convert numpy array to PIL Image if needed
     if isinstance(image, np.ndarray):
         image = Image.fromarray(image)
     
@@ -102,7 +98,6 @@ def base64_to_image(base64_string):
     Returns:
         PIL Image: Decoded image
     """
-    # Remove data URL prefix if present
     if 'base64,' in base64_string:
         base64_string = base64_string.split('base64,')[1]
     
@@ -137,18 +132,15 @@ def validate_image(uploaded_file, max_size_mb=10):
     Returns:
         tuple: (is_valid, error_message)
     """
-    # Check file size
     if uploaded_file.size > max_size_mb * 1024 * 1024:
         return False, f"File size exceeds {max_size_mb}MB limit"
     
-    # Check file extension
     allowed_extensions = ['.jpg', '.jpeg', '.png', '.bmp']
     file_ext = os.path.splitext(uploaded_file.name)[1].lower()
     
     if file_ext not in allowed_extensions:
         return False, f"Invalid file type. Allowed: {', '.join(allowed_extensions)}"
     
-    # Try to open and verify it's a valid image
     try:
         image = Image.open(uploaded_file)
         image.verify()
@@ -175,7 +167,6 @@ def cleanup_old_uploads(upload_dir='media/uploads', days_old=7):
     for filename in os.listdir(upload_dir):
         filepath = os.path.join(upload_dir, filename)
         
-        # Check if file is older than specified days
         if os.path.isfile(filepath):
             file_age = current_time - os.path.getmtime(filepath)
             if file_age > (days_old * 24 * 3600):

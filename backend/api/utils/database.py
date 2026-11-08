@@ -21,14 +21,11 @@ class JSONDatabase:
         Args:
             db_path: Path to JSON database file
         """
-        # Get absolute path
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.db_path = os.path.join(base_dir, db_path)
         
-        # Create database directory if it doesn't exist
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         
-        # Initialize database file if it doesn't exist
         if not os.path.exists(self.db_path):
             self._initialize_database()
     
@@ -82,25 +79,20 @@ class JSONDatabase:
         Returns:
             str: Inspection ID
         """
-        # Read current database
         db = self._read_database()
         
-        # Generate inspection ID
         inspection_id = f"INS_{datetime.now().strftime('%Y%m%d%H%M%S')}_{len(db['inspections']) + 1}"
         
-        # Add metadata to inspection
         inspection_record = {
             'id': inspection_id,
             'timestamp': datetime.now().isoformat(),
             **inspection_data
         }
         
-        # Add to database
         db['inspections'].append(inspection_record)
         db['metadata']['total_inspections'] = len(db['inspections'])
         db['metadata']['last_updated'] = datetime.now().isoformat()
         
-        # Write to file
         self._write_database(db)
         
         return inspection_id
@@ -136,7 +128,6 @@ class JSONDatabase:
         db = self._read_database()
         inspections = db['inspections']
         
-        # Sort by timestamp (most recent first)
         inspections.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         
         if limit:
@@ -172,13 +163,11 @@ class JSONDatabase:
         
         total_inspections = len(db['inspections'])
         
-        # Count by manufacturer
         manufacturer_counts = {}
         for inspection in db['inspections']:
             manufacturer = inspection.get('manufacturer', 'Unknown')
             manufacturer_counts[manufacturer] = manufacturer_counts.get(manufacturer, 0) + 1
         
-        # Calculate average confidence
         confidences = [
             inspection.get('confidence', 0) 
             for inspection in db['inspections']

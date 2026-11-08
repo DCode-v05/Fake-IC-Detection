@@ -1,5 +1,3 @@
-/* InspectionDashboard - Professional Modern Styling - Dark Theme */
-
 .inspection-dashboard {
   background: linear-gradient(135deg, #242B3D 0%, #1A1F2E 100%);
   border-radius: 16px;
@@ -11,7 +9,6 @@
   width: 100%;
 }
 
-/* Header */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -33,7 +30,6 @@
   letter-spacing: -0.5px;
 }
 
-/* Status Badge */
 .status-badge {
   padding: 8px 20px;
   border-radius: 20px;
@@ -71,7 +67,6 @@
   50% { opacity: 0.7; }
 }
 
-/* Dashboard Content */
 .dashboard-content {
   display: flex;
   flex-direction: column;
@@ -82,7 +77,6 @@
   padding-right: 8px;
 }
 
-/* Custom Scrollbar for Dashboard Content */
 .dashboard-content::-webkit-scrollbar {
   width: 3px;
 }
@@ -101,7 +95,6 @@
   background: #0099CC;
 }
 
-/* Start Section */
 .start-section {
   display: flex;
   flex-direction: column;
@@ -110,7 +103,6 @@
   padding: 24px 0;
 }
 
-/* Loading Indicator */
 .loading-indicator {
   display: flex;
   flex-direction: column;
@@ -217,7 +209,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Error Alert */
 .error-alert {
   background: rgba(211, 47, 47, 0.15);
   color: #FF6B6B;
@@ -228,7 +219,6 @@
   border: 1px solid rgba(211, 47, 47, 0.3);
 }
 
-/* Results Container */
 .results-container {
   display: flex;
   flex-direction: column;
@@ -243,7 +233,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Results Grid Layout */
 .results-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -256,7 +245,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-width: 0; /* Allow content to shrink properly */
+  min-width: 0;
 }
 
 @media (max-width: 768px) {
@@ -265,7 +254,6 @@
   }
 }
 
-/* Result Card */
 .result-card {
   padding: 12px 16px;
   border-radius: 10px;
@@ -281,12 +269,10 @@
   border-left: 4px solid transparent;
 }
 
-/* Primary result card (Detection dashboard) - fixed height */
 .result-card:not(.result-secondary) {
   max-height: none;
 }
 
-/* remove shimmer/overlays for a cleaner professional look */
 
 @keyframes shimmer {
   0%, 100% { transform: translate(0, 0); }
@@ -384,26 +370,23 @@
   text-transform: none;
 }
 
-/* Better layout for result card content */
 .result-card .result-title {
-  grid-column: 2 / -1; /* keep title aligned beside the icon */
+  grid-column: 2 / -1;
   line-height: 1.3;
 }
 
 .result-card .result-manufacturer {
-  grid-column: 1 / -1; /* span under the title and icon */
+  grid-column: 1 / -1;
   margin-top: 2px;
   opacity: 0.95;
 }
 
-/* Details Section */
 .details-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Validation: compact info style */
 .details-section.validation-compact .info-card {
   padding: 14px;
   gap: 10px;
@@ -445,7 +428,6 @@
   border-bottom: 2px solid #2D3548;
 }
 
-/* Info Card */
 .info-card {
   background: linear-gradient(135deg, #1A1F2E 0%, #242B3D 100%);
   border-radius: 12px;
@@ -456,7 +438,7 @@
   border: 1px solid #2D3548;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   width: 100%;
-  min-width: 0; /* Allow content to shrink */
+  min-width: 0;
 }
 
 .info-row {
@@ -464,7 +446,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  min-width: 0; /* Allow content to shrink */
+  min-width: 0;
 }
 
 .info-label {
@@ -505,7 +487,6 @@
   overflow-wrap: break-word;
 }
 
-/* Confidence Bar */
 .confidence-bar {
   width: 100%;
   max-width: 200px;
@@ -530,7 +511,6 @@
   color: #00D4FF;
 }
 
-/* Logo Preview */
 .logo-preview {
   background: #fafafa;
   border-radius: 10px;
@@ -554,7 +534,6 @@
   background: white;
 }
 
-/* Text Chips */
 .text-chips {
   display: flex;
   flex-wrap: wrap;
@@ -593,7 +572,6 @@
   border: 1px solid rgba(0, 212, 255, 0.3);
 }
 
-/* Authenticity Badge */
 .authenticity-badge {
   padding: 6px 16px;
   border-radius: 16px;
@@ -612,7 +590,6 @@
   color: white;
 }
 
-/* Web Verification Badges */
 .web-badge {
   background: rgba(0, 212, 255, 0.2);
   color: #00D4FF;
@@ -639,7 +616,6 @@
   gap: 4px;
 }
 
-/* Stock Status Badges */
 .stock-badge {
   padding: 4px 12px;
   border-radius: 12px;
@@ -662,7 +638,6 @@
   border: 1px solid rgba(139, 149, 168, 0.4);
 }
 
-/* Verification Messages */
 .verification-messages {
   margin-top: 12px;
   padding: 12px;
@@ -699,7 +674,6 @@
   margin-bottom: 4px;
 }
 
-/* New Inspection Button */
 .btn-new-inspection {
   background: transparent;
   border: 3px solid #00D4FF;
@@ -730,7 +704,6 @@
   transform: translateY(-1px) scale(0.98);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .inspection-dashboard {
     padding: 24px 16px;
@@ -773,14 +746,10 @@
   }
 }
 
-/* Smooth Transitions */
 * {
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-/* ========================================
-   USER VALIDATION SECTION
-   ======================================== */
 
 .user-validation-section {
   width: 100%;
@@ -876,9 +845,6 @@
   border-radius: 4px;
 }
 
-/* ========================================
-   USER VALIDATION RESULTS
-   ======================================== */
 
 .user-validation-results {
   width: 100%;
@@ -982,9 +948,7 @@
   flex: 1;
 }
 
-/* UserValidationDashboard Specific Styles */
 
-/* Validation Mode - Always visible styling */
 .user-validation-section.validation-mode {
   background: linear-gradient(135deg, #1A2332 0%, #242B3D 100%);
   border: 2px solid #00D4FF;
@@ -1054,7 +1018,6 @@
   line-height: 1.6;
 }
 
-/* Embedded Upload Section in Validation Mode */
 .upload-section-embedded {
   margin: 32px 0;
   padding: 24px;
@@ -1070,7 +1033,6 @@
   box-shadow: 0 4px 16px rgba(0, 212, 255, 0.15);
 }
 
-/* Validate Button Variant */
 .btn-validate {
   background: linear-gradient(135deg, #00C853 0%, #009624 100%);
 }
@@ -1080,7 +1042,6 @@
   box-shadow: 0 8px 24px rgba(0, 200, 83, 0.3);
 }
 
-/* Validation Primary Results */
 .user-validation-results.validation-primary {
   border-width: 3px;
   margin-bottom: 24px;
@@ -1170,7 +1131,6 @@
   line-height: 1.6;
 }
 
-/* Secondary Result Card */
 .result-card.result-secondary {
   opacity: 0.85;
   border-width: 1px;
@@ -1204,7 +1164,6 @@
   font-weight: 700;
 }
 
-/* Image Status Section */
 .image-status-section {
   margin: 24px 0;
   padding: 16px 20px;
@@ -1254,9 +1213,6 @@
   font-weight: 600;
 }
 
-/* ===========================
-   PROGRESSIVE STEPS DISPLAY
-   =========================== */
 
 .progress-steps {
   background: linear-gradient(135deg, #1A1F2E 0%, #242B3D 100%);
@@ -1458,9 +1414,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* ===========================
-   FINAL RESULT SECTION
-   =========================== */
 
 .final-result-section {
   margin-top: 10px;
@@ -1470,7 +1423,6 @@
   animation: fadeIn 0.5s ease-in;
 }
 
-/* Big Result Banner */
 .big-result-banner {
   padding: 12px 20px;
   border-radius: 10px;
@@ -1564,14 +1516,12 @@
   text-transform: uppercase;
 }
 
-/* GENUINE in Green */
 .result-genuine .big-result-text {
   color: #00FF6A;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 255, 106, 0.6), 0 0 40px rgba(0, 255, 106, 0.4);
   animation: greenGlow 2s ease-in-out infinite alternate;
 }
 
-/* FAKE in Bright Red - More visible */
 .result-fake .big-result-text {
   color: #FF3B3B;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 59, 59, 0.9), 0 0 45px rgba(255, 59, 59, 0.6);
@@ -1625,5 +1575,4 @@
 .btn-new-inspection:active {
   transform: translateY(0);
 }
-
 

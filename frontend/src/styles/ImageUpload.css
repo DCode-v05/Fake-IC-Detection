@@ -1,38 +1,35 @@
-/* 🌟 ImageUpload Component Styles — Compact Version */
 .image-upload-container {
   background: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md); /* reduced padding */
+  padding: var(--spacing-md);
   box-shadow: var(--shadow-md);
   max-width: 100%;
 }
 
-/* Title */
 .upload-title {
   font-size: 1.2rem;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-sm); /* tighter spacing */
+  margin-bottom: var(--spacing-sm);
   font-weight: 600;
   border-left: 4px solid var(--primary-color);
   padding-left: var(--spacing-sm);
 }
 
-/* 📦 Upload Zone */
 .upload-zone {
   border: 2px dashed var(--border-color);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md); /* reduced internal padding */
+  padding: var(--spacing-md);
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   background: rgba(0, 212, 255, 0.02);
-  min-height: 140px; /* 🔥 reduced from 240px */
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 0.25rem; /* tighter spacing between elements */
+  gap: 0.25rem;
 }
 
 .upload-zone:hover {
@@ -48,14 +45,13 @@
   box-shadow: var(--shadow-glow);
 }
 
-/* Icon */
 .upload-icon {
   margin-bottom: 0.25rem;
   animation: float 3s ease-in-out infinite;
 }
 
 .upload-icon svg {
-  width: 40px; /* smaller icon */
+  width: 40px;
   height: 40px;
 }
 
@@ -68,7 +64,6 @@
   }
 }
 
-/* Text */
 .upload-text-primary {
   font-size: 1rem;
   color: var(--text-primary);
@@ -82,7 +77,6 @@
   margin-bottom: 0.2rem;
 }
 
-/* Upload Requirements */
 .upload-requirements {
   margin-top: 0.5rem;
   padding-top: 0.25rem;
@@ -95,7 +89,6 @@
   margin: 2px 0;
 }
 
-/* 🖼 Preview Container */
 .preview-container {
   animation: fadeIn 0.3s ease;
 }
@@ -124,7 +117,6 @@
   font-weight: 600;
 }
 
-/* Clear Button */
 .clear-button {
   display: flex;
   align-items: center;
@@ -147,7 +139,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* 🖼 Preview Image Wrapper */
 .preview-image-wrapper {
   border: 2px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -157,7 +148,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px; /* reduced from 260px */
+  min-height: 200px;
   max-height: 260px;
 }
 
@@ -168,7 +159,6 @@
   display: block;
 }
 
-/* 🧾 Image Info */
 .image-info {
   background: var(--background-light);
   border: 1px solid var(--border-color);
@@ -200,11 +190,10 @@
   word-break: break-all;
 }
 
-/* 📱 Responsive Design */
 @media (max-width: 768px) {
   .upload-zone {
     padding: var(--spacing-md);
-    min-height: 120px; /* further reduced for mobile */
+    min-height: 120px;
   }
 
   .upload-text-primary {

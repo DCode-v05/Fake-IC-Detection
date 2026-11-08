@@ -5,38 +5,24 @@ import InspectionDashboard from './components/InspectionDashboard';
 import UserValidationDashboard from './components/UserValidationDashboard';
 import './styles/App.css';
 
-/**
- * Main Application Component
- * Manages the overall state and layout of the AOI IC Marking Detection System
- */
 function App() {
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [inspectionStatus, setInspectionStatus] = useState('idle'); // idle, processing, completed
+  const [inspectionStatus, setInspectionStatus] = useState('idle');
   const [inspectionResult, setInspectionResult] = useState(null);
-  const [activeTab, setActiveTab] = useState('detection'); // detection, validation
+  const [activeTab, setActiveTab] = useState('detection');
 
-  /**
-   * Handle image upload from ImageUpload component
-   * @param {File} file - The uploaded image file
-   */
   const handleImageUpload = (file) => {
     setUploadedImage(file);
     setInspectionStatus('idle');
     setInspectionResult(null);
   };
 
-  /**
-   * Clear the uploaded image and reset inspection state
-   */
   const handleClearImage = () => {
     setUploadedImage(null);
     setInspectionStatus('idle');
     setInspectionResult(null);
   };
 
-  /**
-   * Handle tab change - also resets inspection state
-   */
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setInspectionStatus('idle');
@@ -49,7 +35,6 @@ function App() {
       
       <main className="main-content">
         <div className="container">
-          {/* System Info Section */}
           <section className="system-info">
             <h2>
               {activeTab === 'detection' 
@@ -63,10 +48,8 @@ function App() {
             </p>
           </section>
 
-          {/* Detection Mode Layout: Two Columns (Upload | Analysis) */}
           {activeTab === 'detection' && (
             <div className="two-col-layout">
-              {/* Left: Upload Panel */}
               <section className="upload-section panel-card">
                 <ImageUpload 
                   onImageUpload={handleImageUpload}
@@ -75,7 +58,6 @@ function App() {
                 />
               </section>
 
-              {/* Right: Analysis Panel (sticky/scroll area) */}
               <section className="inspection-section panel-card">
                 <InspectionDashboard 
                   image={uploadedImage}
@@ -88,10 +70,8 @@ function App() {
             </div>
           )}
 
-          {/* Validation Mode Layout: User Inputs First, Then Upload */}
           {activeTab === 'validation' && (
             <>
-              {/* User Validation Dashboard - Shows inputs and upload together */}
               <section className="inspection-section">
                 <UserValidationDashboard 
                   image={uploadedImage}
@@ -108,7 +88,6 @@ function App() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="footer">
         <p>&copy; 2025 AOI IC Marking Detection System | Quality Assurance Division</p>
       </footer>

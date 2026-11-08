@@ -5,28 +5,24 @@ Django settings for IC Detection backend
 import os
 from pathlib import Path
 
-# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-ic-marking-detection-development-key-2025'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']  # Configure appropriately for production
+ALLOWED_HOSTS = ['*']
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
-    'corsheaders',  # For React frontend communication
-    'api',  # Our API app
+    'corsheaders',
+    'api',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Must be before CommonMiddleware
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -50,9 +46,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ic_detection.wsgi.application'
 
-# CORS Configuration for React frontend
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
 
@@ -79,28 +74,22 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Media files (User uploads)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# File upload settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
-# Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

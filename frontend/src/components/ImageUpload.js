@@ -1,18 +1,11 @@
 import React, { useState, useRef } from 'react';
 import '../styles/ImageUpload.css';
 
-/**
- * ImageUpload Component
- * Handles drag-and-drop and click-to-upload functionality for IC images
- */
 function ImageUpload({ onImageUpload, currentImage, onClearImage }) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState(null);
   const fileInputRef = useRef(null);
 
-  /**
-   * Handle drag events
-   */
   const handleDragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -30,9 +23,6 @@ function ImageUpload({ onImageUpload, currentImage, onClearImage }) {
     e.stopPropagation();
   };
 
-  /**
-   * Handle file drop
-   */
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -44,9 +34,6 @@ function ImageUpload({ onImageUpload, currentImage, onClearImage }) {
     }
   };
 
-  /**
-   * Handle file selection via input
-   */
   const handleFileSelect = (e) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -54,43 +41,30 @@ function ImageUpload({ onImageUpload, currentImage, onClearImage }) {
     }
   };
 
-  /**
-   * Process the selected file
-   */
   const handleFile = (file) => {
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please upload an image file (JPG, PNG, etc.)');
       return;
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       alert('File size must be less than 10MB');
       return;
     }
 
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target.result);
     };
     reader.readAsDataURL(file);
 
-    // Pass file to parent component
     onImageUpload(file);
   };
 
-  /**
-   * Trigger file input click
-   */
   const handleClick = () => {
     fileInputRef.current.click();
   };
 
-  /**
-   * Clear the uploaded image
-   */
   const handleClear = () => {
     setPreview(null);
     if (fileInputRef.current) {

@@ -3,18 +3,12 @@ import '../styles/InspectionDashboard.css';
 import { detectManufacturerStream } from '../services/api';
 import ImageUpload from './ImageUpload';
 
-/**
- * UserValidationDashboard Component
- * Focused on validating IC against user-provided expected values
- */
 function UserValidationDashboard({ image, status, result, onStatusChange, onResultChange, onImageUpload, onClearImage }) {
   const [error, setError] = useState(null);
   
-  // User input fields - always required in this mode
   const [expectedManufacturer, setExpectedManufacturer] = useState('');
   const [expectedPartNumber, setExpectedPartNumber] = useState('');
   
-  // Progressive steps state
   const [progressSteps, setProgressSteps] = useState({
     preprocessing: { status: 'pending', message: 'Preprocessing image...', data: null },
     logo_detection: { status: 'pending', message: 'Detecting logo...', data: null },
@@ -36,7 +30,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
     onStatusChange('processing');
     setError(null);
     
-    // Reset progress steps
     setProgressSteps({
       preprocessing: { status: 'pending', message: 'Preprocessing image...', data: null },
       logo_detection: { status: 'pending', message: 'Detecting logo...', data: null },
@@ -45,7 +38,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
     });
     
     try {
-      // Always pass user inputs in this mode
       const userInputs = {
         expectedManufacturer: expectedManufacturer.trim(),
         expectedPartNumber: expectedPartNumber.trim()
@@ -60,9 +52,7 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
           return;
         }
         
-        // Update the specific step
         if (update.step && update.step !== 'complete') {
-          // Only update if the step exists in our progressSteps
           setProgressSteps(prev => {
             if (prev.hasOwnProperty(update.step)) {
               return {
@@ -78,9 +68,7 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
           });
         }
         
-        // Handle completion
         if (update.step === 'complete') {
-          // First update the user_validation step if we have validation data
           if (update.user_validation) {
             const validationStatus = update.user_validation.matches_expectations ? 'completed' : 'failed';
             const validationMessage = update.user_validation.matches_expectations 
@@ -102,7 +90,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
           }
           
           onStatusChange('completed');
-          // Build final result from progress data
           const finalResult = {
             status: update.final_status || 'fake',
             message: update.message,
@@ -140,7 +127,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
 
   return (
     <div className="inspection-dashboard">
-      {/* Header */}
       <div className="dashboard-header">
         <h3>✓ Batchwise IC Validation</h3>
         <span className={`status-badge status-${status}`}>
@@ -150,11 +136,8 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
         </span>
       </div>
 
-      {/* Main Content */}
       <div className="dashboard-content">
-        {/* Two-column Inputs (Left) and Image Upload (Right) */}
         <div className="two-col-layout">
-          {/* Left: User Inputs */}
           <section className="panel-card">
             <div className="user-validation-section validation-mode">
               <div className="validation-header-static">
@@ -202,7 +185,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
             </div>
           </section>
 
-          {/* Right: Image Upload */}
           <section className="panel-card">
             <ImageUpload 
               onImageUpload={onImageUpload}
@@ -212,7 +194,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
           </section>
         </div>
 
-        {/* Validate Button below two columns */}
         {!result && status === 'idle' && (
           <div className="start-section" style={{paddingTop: 0}}>
             <button 
@@ -233,14 +214,12 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
           </div>
         )}
 
-        {/* Progressive Steps Display - Show during processing AND after completion */}
         {(status === 'processing' || status === 'completed') && (
           <div className="progress-steps">
             <h4 className="progress-title">
               {status === 'processing' ? 'Validation Progress' : 'Validation Complete'}
             </h4>
             
-            {/* Render steps in fixed order */}
             {['preprocessing', 'logo_detection', 'ocr_extraction', 'user_validation'].map((stepKey) => {
               const step = progressSteps[stepKey];
               if (!step) return null;
@@ -288,13 +267,10 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
           </div>
         )}
 
-        {/* Results Display */}
         {result && status === 'completed' && (
           <div className="results-container">
-            {/* Primary Result Card - Match with Detect's style */}
             {result.userValidation && (
               <>
-                {/* Big Genuine/Fake Result Banner */}
                 <div className={`big-result-banner result-${result.userValidation.matches_expectations ? 'genuine' : 'fake'}`}>
                   <div className="big-result-icon">
                     {result.userValidation.matches_expectations ? '✓' : '✗'}
@@ -306,7 +282,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
               </>
             )}
 
-            {/* Fallback: if userValidation missing, still show the detect-style main result card */}
             {!result.userValidation && (
               <div className={`big-result-banner result-${result.status}`}>
                 <div className="big-result-icon">
@@ -320,7 +295,6 @@ function UserValidationDashboard({ image, status, result, onStatusChange, onResu
               </div>
             )}
 
-            {/* New Validation Button - match Detect's style */}
             <button
               className="btn-new-inspection"
               onClick={() => {
